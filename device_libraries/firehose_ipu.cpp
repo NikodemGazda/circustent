@@ -93,6 +93,7 @@ void tensorDecomp() {
     // Flags
     bool flag = false;
 
+// QUESTION: is it okay to leave these as they are for testing?
     // Parameters
     long unsigned int rows = 3;
     long unsigned int cols = 3;
@@ -100,6 +101,19 @@ void tensorDecomp() {
     long unsigned int num_transfers = (rows*cols) /packet_size;
     long unsigned int exp_size = 1;
     std::cout << "CHECK3" << std::endl;
+
+// QUESTION: my undestanding is that the consumption tensors are for debugging,
+//           how are they used for debugging? do they just show the contents of
+//           the tensors? if so, can the input/output tensors not be used to do
+//           that?
+// QUESTION: I'm assuming we'd only need one output tensor for stride1, strideN,
+//           and rand
+// QUESTION: why does the input tensor use packet_size, consumption tensor
+//           row*cols, and expansion tensor row, cols? I'm assuing the exp tensor
+//           is used to represent the tensor in 2D, is that just for debugging
+//           visualization purposes?
+// QUESTION: do we want to create the vector of random indices here for the rand
+//           function?   
 
     // Tensors
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
@@ -114,6 +128,8 @@ void tensorDecomp() {
 
     auto identity_tensor = graph.addVariable(poplar::FLOAT, {rows, cols}, "Identity Tensor");
 
+    // QUESTION: am I correct in my understanding that work scheduled into the
+    //           actual IPU is only scheduled if you specify the graph or program?
     poputil::mapTensorLinearly(graph, input_tensor0);
     poputil::mapTensorLinearly(graph, consumption_tensor_in0);
     poputil::mapTensorLinearly(graph, consumption_tensor_in0_exp);
@@ -127,6 +143,10 @@ void tensorDecomp() {
     poputil::mapTensorLinearly(graph, identity_tensor);
     std::cout << "CHECK4" << std::endl;
 
+// QUESTION: For Joe: I remember you saying to use this first addCodelets
+//           if you're using any poplar commands--does that mean we call
+//           or schedule rand here, outside the codelet? If so, do we
+//           continue to write the rest of the functions in the codelet?
     // Add standard codelets
     popops::addCodelets(graph);
 
@@ -139,6 +159,7 @@ void tensorDecomp() {
     auto output_io0 = graph.addVertex(consumption_task_cs, "IOVertex");
     auto output_io1 = graph.addVertex(consumption_task_cs, "IOVertex");
 
+// QUESTION: how do these instructions relate to mapTensorLinearly above?
     graph.setTileMapping(input_io0, 3);
     graph.setTileMapping(output_io0, 4);
     graph.setTileMapping(output_io1, 5);
@@ -157,6 +178,8 @@ void tensorDecomp() {
     //poputil::mapTensorLinearly(graph, ready_flag);
     //poputil::mapTensorLinearly(graph, num_elements);
 
+// QUESTION: should I know what these vectors below are for? The code they're used in
+//           is commented out.
     // CPU Vectors
     std::vector<float> cpu_input0(rows*cols);
     std::vector<float> cpu_output0(rows*cols);
@@ -179,8 +202,11 @@ void tensorDecomp() {
 
     // /* Align Consumption Inputs Program */
 
+// QUESITON: is the point of redifiing the sequence and storing it under the different names just
+//           to make it easier to read/debug?
     // seq = poplar::program::Sequence();
 
+// QUESTION: are we not adding multiple consumption vertices because the entire tensor will be processed at once?
     // seq.add(poplar::program::Copy(consumption_tensor_in0_exp, consumption_tensor_in0.reshape(dimShape)));
     // graph.setTileMapping(consumption_tensor_in0_exp, 3);
 
@@ -190,6 +216,7 @@ void tensorDecomp() {
 
     // seq = poplar::program::Sequence();
 
+// QUESTION: if there are multiple codelets, does this add them all?
     // poplin::addCodelets(graph);
 
     // poplin::experimental::QRFactorization(graph, consumption_tensor_in0_exp, consumption_tensor_out0, seq);
