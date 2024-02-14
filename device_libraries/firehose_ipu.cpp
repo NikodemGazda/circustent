@@ -117,30 +117,30 @@ void tensorDecomp() {
 
     // Tensors
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
-    auto consumption_tensor_in0 = graph.addVariable(poplar::FLOAT, {rows*cols}, "Consumption Task Input 0");
-    auto consumption_tensor_in0_exp = graph.addVariable(poplar::FLOAT, {rows, cols}, "Consumption Task Input 0 Expanded");
-    auto consumption_tensor_out0 = graph.addVariable(poplar::FLOAT, {rows, cols}, "Consumption Task Output 0");
-    auto consumption_tensor_out0_flat = graph.addVariable(poplar::FLOAT, {rows*cols}, "Consumption Task Output 0 Flattened");
-    auto consumption_tensor_out1 = graph.addVariable(poplar::FLOAT, {rows, cols}, "Consumption Task Output 1");
-    auto consumption_tensor_out1_flat = graph.addVariable(poplar::FLOAT, {rows*cols}, "Consumption Task Output 1 Flattened");
+    // auto consumption_tensor_in0 = graph.addVariable(poplar::FLOAT, {rows*cols}, "Consumption Task Input 0");
+    // auto consumption_tensor_in0_exp = graph.addVariable(poplar::FLOAT, {rows, cols}, "Consumption Task Input 0 Expanded");
+    // auto consumption_tensor_out0 = graph.addVariable(poplar::FLOAT, {rows, cols}, "Consumption Task Output 0");
+    // auto consumption_tensor_out0_flat = graph.addVariable(poplar::FLOAT, {rows*cols}, "Consumption Task Output 0 Flattened");
+    // auto consumption_tensor_out1 = graph.addVariable(poplar::FLOAT, {rows, cols}, "Consumption Task Output 1");
+    // auto consumption_tensor_out1_flat = graph.addVariable(poplar::FLOAT, {rows*cols}, "Consumption Task Output 1 Flattened");
     auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
-    auto output_tensor1 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 1");
+    // auto output_tensor1 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 1");
 
-    auto identity_tensor = graph.addVariable(poplar::FLOAT, {rows, cols}, "Identity Tensor");
+    // auto identity_tensor = graph.addVariable(poplar::FLOAT, {rows, cols}, "Identity Tensor");
 
     // QUESTION: am I correct in my understanding that work scheduled into the
     //           actual IPU is only scheduled if you specify the graph or program?
     poputil::mapTensorLinearly(graph, input_tensor0);
-    poputil::mapTensorLinearly(graph, consumption_tensor_in0);
-    poputil::mapTensorLinearly(graph, consumption_tensor_in0_exp);
-    poputil::mapTensorLinearly(graph, consumption_tensor_out0);
-    poputil::mapTensorLinearly(graph, consumption_tensor_out0_flat);
-    poputil::mapTensorLinearly(graph, consumption_tensor_out1);
-    poputil::mapTensorLinearly(graph, consumption_tensor_out1_flat);
+    // poputil::mapTensorLinearly(graph, consumption_tensor_in0);
+    // poputil::mapTensorLinearly(graph, consumption_tensor_in0_exp);
+    // poputil::mapTensorLinearly(graph, consumption_tensor_out0);
+    // poputil::mapTensorLinearly(graph, consumption_tensor_out0_flat);
+    // poputil::mapTensorLinearly(graph, consumption_tensor_out1);
+    // poputil::mapTensorLinearly(graph, consumption_tensor_out1_flat);
     poputil::mapTensorLinearly(graph, output_tensor0);
-    poputil::mapTensorLinearly(graph, output_tensor1);
+    // poputil::mapTensorLinearly(graph, output_tensor1);
 
-    poputil::mapTensorLinearly(graph, identity_tensor);
+    // poputil::mapTensorLinearly(graph, identity_tensor);
     std::cout << "CHECK4" << std::endl;
 
 // QUESTION: For Joe: I remember you saying to use this first addCodelets
@@ -157,23 +157,23 @@ void tensorDecomp() {
     auto consumption_task_cs = graph.addComputeSet("Consumption Task CS");
     auto input_io0 = graph.addVertex(consumption_task_cs, "IOVertex");
     auto output_io0 = graph.addVertex(consumption_task_cs, "IOVertex");
-    auto output_io1 = graph.addVertex(consumption_task_cs, "IOVertex");
+    // auto output_io1 = graph.addVertex(consumption_task_cs, "IOVertex");
 
 // QUESTION: how do these instructions relate to mapTensorLinearly above?
     graph.setTileMapping(input_io0, 3);
     graph.setTileMapping(output_io0, 4);
-    graph.setTileMapping(output_io1, 5);
+    // graph.setTileMapping(output_io1, 5);
 
     // Streams
     auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", poplar::FLOAT, packet_size);
     auto output_strm0 = graph.addDeviceToHostFIFO("Output Stream 0", poplar::FLOAT, packet_size);
-    auto output_strm1 = graph.addDeviceToHostFIFO("Output Stream 1", poplar::FLOAT, packet_size);
+    // auto output_strm1 = graph.addDeviceToHostFIFO("Output Stream 1", poplar::FLOAT, packet_size);
 
     // Misc
     //auto ready_flag = graph.addVariable(poplar::INT, {1}, "Ready Flag");
     //auto num_elements = graph.addVariable(poplar::INT, {1}, "Number of elements");
-    std::vector<std::size_t> dimShape = {rows, cols};
-    std::vector<std::size_t> flatShape = {rows*cols};
+    // std::vector<std::size_t> dimShape = {rows, cols};
+    // std::vector<std::size_t> flatShape = {rows*cols};
 
     //poputil::mapTensorLinearly(graph, ready_flag);
     //poputil::mapTensorLinearly(graph, num_elements);
@@ -183,22 +183,22 @@ void tensorDecomp() {
     // CPU Vectors
     std::vector<float> cpu_input0(rows*cols);
     std::vector<float> cpu_output0(rows*cols);
-    std::vector<float> cpu_output1(rows*cols);
+    // std::vector<float> cpu_output1(rows*cols);
 
     return;
 
     /* Stream Inputs Program */
 
-    // auto seq = poplar::program::Sequence();
+    auto seq = poplar::program::Sequence();
 
-    // for(int i = 0; i < num_transfers; i++) {
-    //     seq.add(poplar::program::Copy(input_strm0, input_tensor0));
-    // }
+    for(int i = 0; i < num_transfers; i++) {
+        seq.add(poplar::program::Copy(input_strm0, input_tensor0));
+    }
 
-    // progs[Progs::STREAM_INPUTS] = seq;
+    progs[Progs::STREAM_INPUTS] = seq;
 
-    // graph.connect(input_io0["strm_in"], input_tensor0);
-    // graph.connect(input_io0["strm_out"], consumption_tensor_in0);
+    graph.connect(input_io0["strm_in"], input_tensor0);
+    graph.connect(input_io0["strm_out"], output_tensor0);
 
     // /* Align Consumption Inputs Program */
 
@@ -214,7 +214,7 @@ void tensorDecomp() {
 
     // /* Consumption Task Program */
 
-    // seq = poplar::program::Sequence();
+    seq = poplar::program::Sequence();
 
 // QUESTION: if there are multiple codelets, does this add them all?
     // poplin::addCodelets(graph);
@@ -243,7 +243,7 @@ void tensorDecomp() {
 
     // for(int i = 0; i < num_transfers; i++) {
     //     seq.add(poplar::program::Copy(output_tensor0, output_strm0));
-    //     seq.add(poplar::program::Copy(output_tensor1, output_strm1));
+    //     // seq.add(poplar::program::Copy(output_tensor1, output_strm1));
     // }
 
     // graph.connect(output_io0["strm_in"], consumption_tensor_out0_flat);
@@ -252,22 +252,24 @@ void tensorDecomp() {
     // graph.connect(output_io1["strm_in"], consumption_tensor_out1_flat);
     // graph.connect(output_io1["strm_out"], output_tensor1);
 
-    // auto exe = poplar::compileGraph(graph, progs);
-    // poplar::Engine engine(std::move(exe));
-    // engine.load(device);
+    auto exe = poplar::compileGraph(graph, progs);
+    poplar::Engine engine(std::move(exe));
+    engine.load(device);
 
-    // std::cout << "HERE" << std::endl;
+    std::cout << "HERE" << std::endl;
 
-    //#pragma omp parallel sections
-    //{
-        //#pragma omp section
-        //{
-            //frontEnd_TensorDecomp(flag, rows, cols, exp_size, cpu_input0, cpu_output0, cpu_output1);
-        //}
+    return 0;
 
-        //#pragma omp section
-        //{
-            //backEnd_TensorDecomp(engine, flag, exp_size);
-        //}
-    //}
+    // #pragma omp parallel sections
+    // {
+    //     #pragma omp section
+    //     {
+    //         frontEnd_TensorDecomp(flag, rows, cols, exp_size, cpu_input0, cpu_output0, cpu_output1);
+    //     }
+
+    //     #pragma omp section
+    //     {
+    //         backEnd_TensorDecomp(engine, flag, exp_size);
+    //     }
+    // }
 }

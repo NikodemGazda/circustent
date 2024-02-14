@@ -1,5 +1,12 @@
 Hi all, putting comments and questions here:
 
+edits;
+- commented out consump tensors
+- try using rand w/ C library   
+    - then try poplar
+    - if nothing works try sttramin in random numbers from cpu
+
+
 2/8 comments:
 
 - read-first:
