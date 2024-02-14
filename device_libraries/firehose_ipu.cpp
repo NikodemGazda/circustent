@@ -258,7 +258,7 @@ void tensorDecomp() {
 
     std::cout << "HERE" << std::endl;
 
-    return 0;
+    // return 0;
 
     // #pragma omp parallel sections
     // {
