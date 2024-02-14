@@ -17,10 +17,13 @@ Output<Vector<float>> strm_out;
 // takes in a vector of floats and adds 1 to every element.
 
 // Compute function
-     bool compute() {
+    bool compute() {
         //if (ready_flag[0]) {
+            srand(2048);
+            int random_value;
             for (unsigned i = 0; i < strm_in.size(); i++) {
-                strm_out[i] = strm_in[i]+1;
+                random_value = rand() % strm_in.size();
+                strm_out[random_value] = strm_in[random_value]+1;
             }
         //}
         return true;
