@@ -1,6 +1,16 @@
 Hi all, putting comments and questions here:
 
-edits;
+2/14 and 2/15 edits:
+
+- cleaned up code
+- added rand
+- added strideN
+- tested it out, we're getting outputs from each check
+
+
+
+
+edits after meeting w/ Joe:
 - commented out consump tensors
 - try using rand w/ C library   
     - then try poplar
