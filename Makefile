@@ -8,6 +8,7 @@ libipu.a: mylib.o
 	ar rcs ./device_libraries/libipu.a ./device_libraries/mylib.o
 mylib.o:
 #	popc -o ./device_libraries/io_codelet.gp ./device_libraries/io_codelet.cpp
+#	popc -o ./device_libraries/io_codelet.gp ./device_libraries/io_codelet_strideN.cpp
 	popc -o ./device_libraries/io_codelet.gp ./device_libraries/io_codelet_rand.cpp
 	$(CC) -c -fopenmp ./device_libraries/firehose_ipu.cpp -o ./device_libraries/mylib.o
 
