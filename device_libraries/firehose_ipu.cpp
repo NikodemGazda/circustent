@@ -154,8 +154,7 @@ void tensorDecomp() {
     }
 
     // setting up random indices for rand
-    auto randomState = poprand::createState(graph, seq, "RandomState");
-    poplar::Tensor randomIndices = poprand::uniform(graph, randomState, {packet_size}, 0, packet_size, seq);
+    poplar::Tensor randomIndices = poprand::uniform(graph, NULL, {packet_size}, 0, packet_size, seq);
     graph.addVariable(poplar::FLOAT, {packet_size}, "randomIndices");
     graph.connect(input_io0["randomIndices"], randomIndices);
 
