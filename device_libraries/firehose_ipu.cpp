@@ -153,6 +153,10 @@ void tensorDecomp() {
         seq.add(poplar::program::Copy(input_strm0, input_tensor0));
     }
 
+    poplar::Tensor randomIndices = poprand::uniform(graph, randomState, {packet_size}, 0, packet_size, seq);
+    graph.addInput(input_io0, "randomIndices", randomIndices);
+    graph.connect(input_io0["randomIndices"], randomIndices);
+
     progs[Progs::STREAM_INPUTS] = seq;
 
     graph.connect(input_io0["strm_in"], input_tensor0);

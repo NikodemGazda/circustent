@@ -8,6 +8,7 @@ class IOVertex : public Vertex {
 public:
 
 Input<Vector<float>> strm_in;
+Input<Vector<float>> randomIndices;
 Output<Vector<float>> strm_out;
 
 // function:
@@ -19,11 +20,12 @@ Output<Vector<float>> strm_out;
 // Compute function
     bool compute() {
         //if (ready_flag[0]) {
-            srand(2048);
-            int random_value;
+            // srand(2048);
+            // int random_value;
             for (unsigned i = 0; i < strm_in.size(); i++) {
-                random_value = rand() % strm_in.size();
-                strm_out[random_value] = strm_in[random_value]+1;
+                // random_value = rand() % strm_in.size();
+                // strm_out[random_value] = strm_in[random_value]+1;
+                strm_out[randomIndices[i]] = strm_in[randomIndices[i]]+1;
             }
         //}
         return true;
