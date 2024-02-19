@@ -11,6 +11,8 @@
 #include <poplar/Graph.hpp>
 #include <poplar/IPUModel.hpp>
 #include <poplar/Tensor.hpp>
+#include <poplar/rand.hpp>
+
 
 #include <popops/codelets.hpp>
 
