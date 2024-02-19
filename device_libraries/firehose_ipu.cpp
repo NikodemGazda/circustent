@@ -137,7 +137,7 @@ void tensorDecomp() {
     // set to N=2 for now
     //auto N = graph.addVariable(poplar::INT, {2}, "N");
 
-    //poputil::mapTensorLinearly(graph, ready_flag);
+    //poputil::mapTensorLinearly(graph, N);
 
     // CPU Vectors
     std::vector<float> cpu_input0(rows*cols);
