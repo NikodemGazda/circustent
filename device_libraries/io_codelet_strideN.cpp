@@ -28,6 +28,7 @@ Output<Vector<float>> strm_out;
 // Compute function
     bool compute() {
         //if (ready_flag[0]) {
+            cout << "\nN: " << N << endl;
             for (unsigned i = 0; i < strm_in.size(); i+=N) {
                 strm_out[i] = strm_in[i]+1;
             }
