@@ -135,9 +135,11 @@ void tensorDecomp() {
 
     // ********** REQUIRED FOR STRIDEN CODELET **********
     // set to N=2 for now
-    //auto N = graph.addVariable(poplar::INT, {2}, "N");
+    //auto N  = graph.addVariable(poplar::INT, {1}, "N");
+    //auto c1 = graph.addConstant<int>(INT, {1}, {2});
 
-    //poputil::mapTensorLinearly(graph, N);
+    // poputil::mapTensorLinearly(graph, N);
+    // poputil::mapTensorLinearly(graph, c1);
 
     // CPU Vectors
     std::vector<float> cpu_input0(rows*cols);
@@ -149,18 +151,31 @@ void tensorDecomp() {
 
     auto seq = poplar::program::Sequence();
 
+    // // step to initialize N with the constant value in c1
+    // seq.add(poplar:program::Copy(c1, N));
+
+    // step to print values in the input array 
+    seq.add(program::PrintTensor("input-debug", input_strm0));
+
     for(int i = 0; i < num_transfers; i++) {
         seq.add(poplar::program::Copy(input_strm0, input_tensor0));
     }
 
+    // step to print values in the ouput array 
+    seq.add(program::PrintTensor("output_strm0", output_strm0));
+
     // setting up random indices for rand
-    poplar::Tensor randomIndices = poprand::uniform(graph, NULL, {packet_size}, 0, packet_size, seq);
+    // reference tensor
+    poplar::Tensor ref = graph.addVariable(poplar::INT, {packet_size}, "ref");
+    poplar::Tensor randomIndices = poprand::uniform(graph, NULL, NULL, &ref, poplar::INT, 0, packet_size-1, seq);
+    // adding random indices to the graph
     graph.addVariable(poplar::FLOAT, {packet_size}, "randomIndices");
     graph.connect(input_io0["randomIndices"], randomIndices);
 
     progs[Progs::STREAM_INPUTS] = seq;
 
     graph.connect(input_io0["strm_in"], input_tensor0);
+    // graph.connect(input_io0["N"], N);
     graph.connect(input_io0["strm_out"], output_tensor0);
 
     /* Compiling Graph */
