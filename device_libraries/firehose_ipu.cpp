@@ -141,9 +141,11 @@ void tensorDecomp() {
     // set to N=2 for now
     //auto N  = graph.addVariable(poplar::INT, {1}, "N");
     //auto c1 = graph.addConstant<int>(INT, {1}, {2});
+    auto c2 = graph.addConstant<int>(INT, {packet_size}, {5,3,7,6,4,8,2,9,0,1});
 
     // poputil::mapTensorLinearly(graph, N);
     // poputil::mapTensorLinearly(graph, c1);
+    poputil::mapTensorLinearly(graph, c2);
 
     // CPU Vectors
     std::vector<float> cpu_input0(rows*cols);
@@ -157,11 +159,12 @@ void tensorDecomp() {
 
     // // step to initialize N with the constant value in c1
     // seq.add(poplar:program::Copy(c1, N));
+    seq.add(poplar:program::Copy(c1, randomIndices));
 
     seq.add(poplar::program::Copy(input_strm0, input_tensor0));
 
     // adding random indices to the graph
-    randomIndices = poprand::uniform(graph, nullptr, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
+    // randomIndices = poprand::uniform(graph, nullptr, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
     // std::cout << "randomIndices: "<< randomIndices << std::endl;
 
     seq.add(poplar::program::Copy(rand_strm0, randomIndices));
