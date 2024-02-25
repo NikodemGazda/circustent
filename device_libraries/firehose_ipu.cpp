@@ -93,7 +93,6 @@ void tensorDecomp() {
     // Flags
     bool flag = false;
 
-// QUESTION: is it okay to leave these as they are for testing?
     // Parameters
     long unsigned int rows = 3;
     long unsigned int cols = 3;
@@ -105,19 +104,23 @@ void tensorDecomp() {
     // Tensors
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
     auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
+    // setting up random indices for rand
+    // reference tensor
+    poplar::Tensor randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
 
     poputil::mapTensorLinearly(graph, input_tensor0);
     poputil::mapTensorLinearly(graph, output_tensor0);
+    poputil::mapTensorLinearly(graph, randomIndices);
 
     std::cout << "CHECK4" << std::endl;
 
     // Add standard codelets
     popops::addCodelets(graph);
+    poprand::addCodelets(graph);
 
     // Add custom codelets
-    graph.addCodelets("./device_libraries/io_codelet.gp");
-
     // ******* UNCOMMENT THE FOLLOWING LINES TO TEST THE OTHER CODELETS *******
+    graph.addCodelets("./device_libraries/io_codelet.gp");
     // graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
     // graph.addCodelets("./device_libraries/io_codelet_rand.gp");
 
@@ -132,6 +135,7 @@ void tensorDecomp() {
     // Streams
     auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", poplar::FLOAT, packet_size);
     auto output_strm0 = graph.addDeviceToHostFIFO("Output Stream 0", poplar::FLOAT, packet_size);
+    auto rand_strm0 = graph.addDeviceToHostFIFO("Rand Stream 0", poplar::FLOAT, packet_size);
 
     // ********** REQUIRED FOR STRIDEN CODELET **********
     // set to N=2 for now
@@ -154,22 +158,18 @@ void tensorDecomp() {
     // // step to initialize N with the constant value in c1
     // seq.add(poplar:program::Copy(c1, N));
 
-    for(int i = 0; i < num_transfers; i++) {
-        seq.add(poplar::program::Copy(input_strm0, input_tensor0));
-    }
+    seq.add(poplar::program::Copy(input_strm0, input_tensor0));
 
-    // setting up random indices for rand
-    // reference tensor
-    poplar::Tensor ref = graph.addVariable(poplar::INT, {packet_size}, "ref");
-    poplar::Tensor randomIndices = poprand::uniform(graph, NULL, 0, ref, poplar::INT, 0, packet_size-1, seq);
-    std::cout << "randomIndices: "<< randomIndices << std::endl;
     // adding random indices to the graph
-    graph.addVariable(poplar::FLOAT, {packet_size}, "randomIndices");
-    graph.connect(input_io0["randomIndices"], randomIndices);
+    randomIndices = poprand::uniform(graph, NULL, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
+    std::cout << "randomIndices: "<< randomIndices << std::endl;
+
+    seq.add(poplar::program::Copy(rand_strm0, randomIndices));
 
     progs[Progs::STREAM_INPUTS] = seq;
 
     graph.connect(input_io0["strm_in"], input_tensor0);
+    graph.connect(input_io0["randomIndices"], randomIndices);
     // graph.connect(input_io0["N"], N);
     graph.connect(input_io0["strm_out"], output_tensor0);
 
