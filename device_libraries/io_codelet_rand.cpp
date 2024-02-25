@@ -8,7 +8,7 @@ class IOVertex : public Vertex {
 public:
 
 Input<Vector<float>> strm_in;
-Input<Vector<float>> randomIndices;
+Input<Vector<int>> randomIndices;
 Output<Vector<float>> strm_out;
 
 // function:
