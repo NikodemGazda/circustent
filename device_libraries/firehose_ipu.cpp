@@ -162,7 +162,7 @@ void tensorDecomp() {
 
     // adding random indices to the graph
     randomIndices = poprand::uniform(graph, nullptr, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
-    std::cout << "randomIndices: "<< randomIndices << std::endl;
+    // std::cout << "randomIndices: "<< randomIndices << std::endl;
 
     seq.add(poplar::program::Copy(rand_strm0, randomIndices));
 
