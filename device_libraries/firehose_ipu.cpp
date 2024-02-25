@@ -168,11 +168,12 @@ void tensorDecomp() {
         seq.add(poplar::program::Copy(input_strm0, input_tensor0));
     }
 
+    graph.connect(input_io0["strm_in"], input_tensor0);
+    graph.connect(output_io0["strm_out"], output_tensor0);
+    
     seq.add(poplar::program::Execute(io_in));
 
 
-    graph.connect(input_io0["strm_in"], input_tensor0);
-    graph.connect(output_io0["strm_out"], output_tensor0);
 
     for(int i = 0; i < num_transfers; i++) {
         seq.add(poplar::program::Copy(output_tensor0, output_strm0));
