@@ -141,7 +141,7 @@ void tensorDecomp() {
     // set to N=2 for now
     //auto N  = graph.addVariable(poplar::INT, {1}, "N");
     //auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
-    auto c2 = graph.addConstant<int>(poplar::INT, {packet_size}, {5,3,7,6,4,8,2,9,0,1});
+    auto c2 = graph.addConstant<int>(poplar::INT, {packet_size}, {5,3,7,6,4,8,2,0,1});
 
     // poputil::mapTensorLinearly(graph, N);
     // poputil::mapTensorLinearly(graph, c1);
