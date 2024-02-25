@@ -162,6 +162,7 @@ void tensorDecomp() {
     // reference tensor
     poplar::Tensor ref = graph.addVariable(poplar::INT, {packet_size}, "ref");
     poplar::Tensor randomIndices = poprand::uniform(graph, NULL, 0, ref, poplar::INT, 0, packet_size-1, seq);
+    std::cout << "randomIndices: "<< randomIndices << std::endl;
     // adding random indices to the graph
     graph.addVariable(poplar::FLOAT, {packet_size}, "randomIndices");
     graph.connect(input_io0["randomIndices"], randomIndices);
