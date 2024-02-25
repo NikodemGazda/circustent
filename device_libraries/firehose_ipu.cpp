@@ -159,7 +159,7 @@ void tensorDecomp() {
 
     // // step to initialize N with the constant value in c1
     // seq.add(poplar:program::Copy(c1, N));
-    seq.add(poplar:program::Copy(c1, randomIndices));
+    seq.add(poplar:program::Copy(c2, randomIndices));
 
     seq.add(poplar::program::Copy(input_strm0, input_tensor0));
 
