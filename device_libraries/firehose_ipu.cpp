@@ -168,10 +168,6 @@ void tensorDecomp() {
         seq.add(poplar::program::Copy(input_strm0, input_tensor0));
     }
 
-    for(int i = 0; i < num_transfers; i++) {
-        seq.add(poplar::program::Copy(input_strm1, input_tensor1));
-    }
-
     seq.add(poplar::program::Execute(io_in));
 
 
