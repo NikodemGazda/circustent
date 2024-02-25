@@ -2,10 +2,10 @@
 
 enum Progs {
     STREAM_INPUTS,
-    // ALIGN_INPUTS,
-    // CONSUMPTION_TASK,
-    // ALIGN_OUTPUTS,
-    // STREAM_OUTPUTS,
+    ALIGN_INPUTS,
+    CONSUMPTION_TASK,
+    ALIGN_OUTPUTS,
+    STREAM_OUTPUTS,
     NUM_PROGRAMS
 };
 
@@ -26,50 +26,50 @@ void printMatrix(std::string matrix_name, std::vector<float> matrix, int cols) {
 
 }
 
-void frontEnd_TensorDecomp(bool& flag, long unsigned int& rows, long unsigned int& cols, long unsigned int& exp_size, std::vector<float>& cpu_input0, std::vector<float>& cpu_output0, std::vector<float>& cpu_output1) {
-    /* Create data to input into back-end */
-    //std::random_device rd;
-    //std::mt19937 gen(rd());
-    //std::uniform_real_distribution<float> distribution(0.0f, 100.0f);
+// void frontEnd_TensorDecomp(bool& flag, long unsigned int& rows, long unsigned int& cols, long unsigned int& exp_size, std::vector<float>& cpu_input0, std::vector<float>& cpu_output0, std::vector<float>& cpu_output1) {
+//     /* Create data to input into back-end */
+//     std::random_device rd;
+//     std::mt19937 gen(rd());
+//     std::uniform_real_distribution<float> distribution(0.0f, 100.0f);
 
-    //for (int i = 0; i < rows; i++) {
-        //for (int j = 0; j < cols; j++) {
-            //cpu_input0[j+(cols*i)] = distribution(gen);
-        //}
-    //}
-    //printMatrix("GenMatrix", cpu_input0, cols);
+//     for (int i = 0; i < rows; i++) {
+//         for (int j = 0; j < cols; j++) {
+//             cpu_input0[j+(cols*i)] = distribution(gen);
+//         }
+//     }
+//     printMatrix("GenMatrix", cpu_input0, cols);
 
-    //flag = true;
-    /* Loop to create multiple matrices and decompose */
-    //for (int i = 0; i < exp_size; i++) {
+//     flag = true;
+//     /* Loop to create multiple matrices and decompose */
+//     for (int i = 0; i < exp_size; i++) {
         
-        //for (int i = 0; i < rows; i++) {
-            //for (int j = 0; j < cols; j++) {
-                //cpu_input0[j+(cols*i)] = distribution(gen);
-            //}
-        //}
+//         for (int i = 0; i < rows; i++) {
+//             for (int j = 0; j < cols; j++) {
+//                 cpu_input0[j+(cols*i)] = distribution(gen);
+//             }
+//         }
 
-        //while(flag) {}
-        //printMatrix("QMatrix", cpu_output0, cols);
-        //printMatrix("RMatrix", cpu_output1, cols);
-        //sleep(1);
-    //}
-}
+//         while(flag) {}
+//         printMatrix("QMatrix", cpu_output0, cols);
+//         printMatrix("RMatrix", cpu_output1, cols);
+//         sleep(1);
+//     }
+// }
 
-void backEnd_TensorDecomp(poplar::Engine& engine, bool& flag, long unsigned int& exp_size) {
-    //for (int i = 0; i < exp_size; i++) {
-        //while(!flag) {}
-        //flag = false;
-        //engine.run(Progs::STREAM_INPUTS);
-        //engine.run(Progs::ALIGN_INPUTS);
-        //engine.run(Progs::CONSUMPTION_TASK);
-        //engine.run(Progs::ALIGN_OUTPUTS);
-        //engine.run(Progs::STREAM_OUTPUTS);
-    //}
-}
+// void backEnd_TensorDecomp(poplar::Engine& engine, bool& flag, long unsigned int& exp_size) {
+//     for (int i = 0; i < exp_size; i++) {
+//         while(!flag) {}
+//         flag = false;
+//         engine.run(Progs::STREAM_INPUTS);
+//         engine.run(Progs::ALIGN_INPUTS);
+//         engine.run(Progs::CONSUMPTION_TASK);
+//         engine.run(Progs::ALIGN_OUTPUTS);
+//         engine.run(Progs::STREAM_OUTPUTS);
+//     }
+// }
 
 void tensorDecomp() {
-    std::cout << "START" << std::endl;
+    std::cout << "Getting Device..." << std::endl;
     // Get an IPU Device
     auto manager = poplar::DeviceManager::createDeviceManager();
     auto hwDevices = manager.getDevices(poplar::TargetType::IPU, 1);
@@ -80,18 +80,20 @@ void tensorDecomp() {
         device = std::move(*it);
     }
 
+    std::cout << "Got Device!" << std::endl;
+
     /* Expose Shared Memory */
 
     // Graph
+    std::cout << "Creating Graph..." << std::endl;
     poplar::Graph graph(device.getTarget());
-    std::cout << "CHECK1" << std::endl;
+    std::cout << "Created Graph!" << std::endl;
 
     // Programs
     std::vector<poplar::program::Program> progs(Progs::NUM_PROGRAMS);
-    std::cout << "CHECK2" << std::endl;
 
     // Flags
-    bool flag = false;
+    bool data_ready_flag = false;
 
     // Parameters
     long unsigned int rows = 3;
@@ -99,99 +101,130 @@ void tensorDecomp() {
     long unsigned int packet_size = 9;
     long unsigned int num_transfers = (rows*cols) /packet_size;
     long unsigned int exp_size = 1;
-    std::cout << "CHECK3" << std::endl;
 
     // Tensors
+    std::cout << "Adding Tensors..." << std::endl;
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
     auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
-    // setting up random indices for rand
-    // reference tensor
-    poplar::Tensor randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
 
+    std::cout << "Added Tensors!" << std::endl;
+
+    std::cout << "Mapping Tensors..." << std::endl;
     poputil::mapTensorLinearly(graph, input_tensor0);
     poputil::mapTensorLinearly(graph, output_tensor0);
-    poputil::mapTensorLinearly(graph, randomIndices);
 
-    std::cout << "CHECK4" << std::endl;
+    std::cout << "Mapped Tensors!" << std::endl;
 
+    std::cout << "Adding Codelets..." << std::endl;
     // Add standard codelets
     popops::addCodelets(graph);
-    // poprand::addCodelets(graph);
 
     // Add custom codelets
-    // ******* UNCOMMENT THE FOLLOWING LINES TO TEST THE OTHER CODELETS *******
-    // graph.addCodelets("./device_libraries/io_codelet.gp");
-    // graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
-    graph.addCodelets("./device_libraries/io_codelet_rand.gp");
+    graph.addCodelets("./device_libraries/io_codelet.gp");
 
+    std::cout << "Added Codelets!" << std::endl;
+
+    std::cout << "Adding Vertices..." << std::endl;
     // Vertices
-    auto consumption_task_cs = graph.addComputeSet("Consumption Task CS");
-    auto input_io0 = graph.addVertex(consumption_task_cs, "IOVertex");
-    auto output_io0 = graph.addVertex(consumption_task_cs, "IOVertex");
+    //auto consumption_task_cs = graph.addComputeSet("Consumption Task CS");
+    auto io_in = graph.addComputeSet("IO in CS");
+    auto io_out = graph.addComputeSet("IO out CS");
+    auto input_io0 = graph.addVertex(io_in, "IOVertex");
+    auto output_io0 = graph.addVertex(io_out, "IOVertex");
 
+    std::cout << "Added Vertices!" << std::endl;
+
+    std::cout << "Mapping Vertices..." << std::endl;
     graph.setTileMapping(input_io0, 3);
     graph.setTileMapping(output_io0, 4);
 
+    std::cout << "Mapped Vertices!" << std::endl;
+
+    std::cout << "Adding Streams..." << std::endl;
     // Streams
-    auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", poplar::FLOAT, packet_size);
+    auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", input_tensor0.elementType(), input_tensor0.numElements());
     auto output_strm0 = graph.addDeviceToHostFIFO("Output Stream 0", poplar::FLOAT, packet_size);
 
-    // ********** REQUIRED FOR STRIDEN CODELET **********
-    // set to N=2 for now
-    //auto N  = graph.addVariable(poplar::INT, {1}, "N");
-    //auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
-    auto c2 = graph.addConstant<int>(poplar::INT, {packet_size}, {5,3,7,6,4,8,2,0,1});
+    std::cout << "Added Streams!" << std::endl;
 
-    // poputil::mapTensorLinearly(graph, N);
-    // poputil::mapTensorLinearly(graph, c1);
-    poputil::mapTensorLinearly(graph, c2);
+    // Misc
+    //auto ready_flag = graph.addVariable(poplar::INT, {1}, "Ready Flag");
+    //auto num_elements = graph.addVariable(poplar::INT, {1}, "Number of elements");
+    std::vector<std::size_t> dimShape = {rows, cols};
+    std::vector<std::size_t> flatShape = {rows*cols};
+
+    //poputil::mapTensorLinearly(graph, ready_flag);
+    //poputil::mapTensorLinearly(graph, num_elements);
 
     // CPU Vectors
     std::vector<float> cpu_input0(rows*cols);
     std::vector<float> cpu_output0(rows*cols);
 
-    // return;
-
     /* Stream Inputs Program */
 
     auto seq = poplar::program::Sequence();
 
-    // // step to initialize N with the constant value in c1
-    // seq.add(poplar:program::Copy(c1, N));
-    seq.add(poplar::program::Copy(c2, randomIndices));
+    for(int i = 0; i < num_transfers; i++) {
+        seq.add(poplar::program::Copy(input_strm0, input_tensor0));
+    }
 
-    seq.add(poplar::program::Copy(input_strm0, input_tensor0));
+    for(int i = 0; i < num_transfers; i++) {
+        seq.add(poplar::program::Copy(input_strm1, input_tensor1));
+    }
 
-    // adding random indices to the graph
-    // randomIndices = poprand::uniform(graph, nullptr, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
-    // std::cout << "randomIndices: "<< randomIndices << std::endl;
+    seq.add(poplar::program::Execute(io_in));
+
+
+    graph.connect(input_io0["strm_in"], input_tensor0);
+    graph.connect(output_io0["strm_out"], output_tensor0);
+
+    for(int i = 0; i < num_transfers; i++) {
+        seq.add(poplar::program::Copy(output_tensor0, output_strm0));
+    }
 
     progs[Progs::STREAM_INPUTS] = seq;
 
-    graph.connect(input_io0["strm_in"], input_tensor0);
-    graph.connect(input_io0["randomIndices"], randomIndices);
-    // graph.connect(input_io0["N"], N);
-    graph.connect(input_io0["strm_out"], output_tensor0);
-
-    /* Compiling Graph */
     auto exe = poplar::compileGraph(graph, progs);
     poplar::Engine engine(std::move(exe));
     engine.load(device);
 
-    std::cout << "HERE" << std::endl;
+    /* Connect Streams */
 
-    // return 0;
+    engine.connectStream("Input Stream 0", cpu_input0.data(), cpu_input0.data() + cpu_input0.size());
+    engine.connectStream("Output Stream 0", cpu_output0.data(), cpu_output0.data() + cpu_output0.size());
 
-    // #pragma omp parallel sections
-    // {
-    //     #pragma omp section
-    //     {
-    //         frontEnd_TensorDecomp(flag, rows, cols, exp_size, cpu_input0, cpu_output0, cpu_output1);
-    //     }
+    std::cout << "Loaded Device" << std::endl;
 
-    //     #pragma omp section
-    //     {
-    //         backEnd_TensorDecomp(engine, flag, exp_size);
-    //     }
-    // }
+    #pragma omp parallel sections
+    {
+        #pragma omp section
+        {
+            while(data_ready_flag) {}
+
+            /* Create data to input into back-end */
+            std::random_device rd;
+            std::mt19937 gen(rd());
+            std::uniform_real_distribution<float> distribution(0.0f, 100.0f);
+
+            /* Loop to create multiple matrices and decompose */
+                for (int i = 0; i < rows; i++) {
+                    for (int j = 0; j < cols; j++) {
+                        cpu_input0[j+(cols*i)] = 1;
+                        cpu_input0[j+(cols*i)] = distribution(gen);
+                    }
+                }
+                printMatrix("GenMatrix", cpu_input0, cols);
+                data_ready_flag = true;
+        }
+
+        #pragma omp section
+        {
+            while(!data_ready_flag) {}
+            data_ready_flag = false;
+            engine.run(Progs::STREAM_INPUTS);
+
+            printMatrix("QMatrix", cpu_output0, cols);
+        }
+    }
+    return;
 }
