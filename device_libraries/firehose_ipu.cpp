@@ -116,7 +116,7 @@ void tensorDecomp() {
 
     // Add standard codelets
     popops::addCodelets(graph);
-    poprand::addCodelets(graph);
+    // poprand::addCodelets(graph);
 
     // Add custom codelets
     // ******* UNCOMMENT THE FOLLOWING LINES TO TEST THE OTHER CODELETS *******
@@ -161,7 +161,7 @@ void tensorDecomp() {
     seq.add(poplar::program::Copy(input_strm0, input_tensor0));
 
     // adding random indices to the graph
-    randomIndices = poprand::uniform(graph, NULL, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
+    randomIndices = poprand::uniform(graph, nullptr, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
     std::cout << "randomIndices: "<< randomIndices << std::endl;
 
     seq.add(poplar::program::Copy(rand_strm0, randomIndices));
