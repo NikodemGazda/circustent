@@ -120,9 +120,9 @@ void tensorDecomp() {
 
     // Add custom codelets
     // ******* UNCOMMENT THE FOLLOWING LINES TO TEST THE OTHER CODELETS *******
-    graph.addCodelets("./device_libraries/io_codelet.gp");
+    // graph.addCodelets("./device_libraries/io_codelet.gp");
     // graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
-    // graph.addCodelets("./device_libraries/io_codelet_rand.gp");
+    graph.addCodelets("./device_libraries/io_codelet_rand.gp");
 
     // Vertices
     auto consumption_task_cs = graph.addComputeSet("Consumption Task CS");
