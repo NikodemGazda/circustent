@@ -116,7 +116,7 @@ void tensorDecomp() {
 
     // Add standard codelets
     popops::addCodelets(graph);
-    poprand::addCodelets(graph);
+    // poprand::addCodelets(graph);
 
     // Add custom codelets
     // ******* UNCOMMENT THE FOLLOWING LINES TO TEST THE OTHER CODELETS *******
