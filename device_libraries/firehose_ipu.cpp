@@ -135,7 +135,6 @@ void tensorDecomp() {
     // Streams
     auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", poplar::FLOAT, packet_size);
     auto output_strm0 = graph.addDeviceToHostFIFO("Output Stream 0", poplar::FLOAT, packet_size);
-    auto rand_strm0 = graph.addDeviceToHostFIFO("Rand Stream 0", poplar::FLOAT, packet_size);
 
     // ********** REQUIRED FOR STRIDEN CODELET **********
     // set to N=2 for now
@@ -166,8 +165,6 @@ void tensorDecomp() {
     // adding random indices to the graph
     // randomIndices = poprand::uniform(graph, nullptr, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
     // std::cout << "randomIndices: "<< randomIndices << std::endl;
-
-    seq.add(poplar::program::Copy(rand_strm0, randomIndices));
 
     progs[Progs::STREAM_INPUTS] = seq;
 
