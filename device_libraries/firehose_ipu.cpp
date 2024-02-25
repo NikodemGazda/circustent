@@ -154,15 +154,9 @@ void tensorDecomp() {
     // // step to initialize N with the constant value in c1
     // seq.add(poplar:program::Copy(c1, N));
 
-    // step to print values in the input array 
-    seq.add(program::PrintTensor("input-debug", input_strm0));
-
     for(int i = 0; i < num_transfers; i++) {
         seq.add(poplar::program::Copy(input_strm0, input_tensor0));
     }
-
-    // step to print values in the ouput array 
-    seq.add(program::PrintTensor("output_strm0", output_strm0));
 
     // setting up random indices for rand
     // reference tensor
