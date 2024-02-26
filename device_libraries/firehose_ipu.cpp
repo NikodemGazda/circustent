@@ -106,12 +106,18 @@ void tensorDecomp() {
     std::cout << "Adding Tensors..." << std::endl;
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
     auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
+    auto N_input = graph.addVariable(poplar::FLOAT, {1}, "N Input");
+
+    // constants
+    auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
 
     std::cout << "Added Tensors!" << std::endl;
 
     std::cout << "Mapping Tensors..." << std::endl;
     poputil::mapTensorLinearly(graph, input_tensor0);
     poputil::mapTensorLinearly(graph, output_tensor0);
+    poputil::mapTensorLinearly(graph, N_input);
+    poputil::mapTensorLinearly(graph, c1);
 
     std::cout << "Mapped Tensors!" << std::endl;
 
@@ -120,7 +126,8 @@ void tensorDecomp() {
     popops::addCodelets(graph);
 
     // Add custom codelets
-    graph.addCodelets("./device_libraries/io_codelet.gp");
+    // graph.addCodelets("./device_libraries/io_codelet.gp");
+    graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
 
     std::cout << "Added Codelets!" << std::endl;
 
@@ -150,8 +157,6 @@ void tensorDecomp() {
     // Misc
     //auto ready_flag = graph.addVariable(poplar::INT, {1}, "Ready Flag");
     //auto num_elements = graph.addVariable(poplar::INT, {1}, "Number of elements");
-    std::vector<std::size_t> dimShape = {rows, cols};
-    std::vector<std::size_t> flatShape = {rows*cols};
 
     //poputil::mapTensorLinearly(graph, ready_flag);
     //poputil::mapTensorLinearly(graph, num_elements);
@@ -168,9 +173,14 @@ void tensorDecomp() {
         seq.add(poplar::program::Copy(input_strm0, input_tensor0));
     }
 
+    // copying N to the input tensor
+    seq.add(poplar::program::Copy(c1, N_input));
+
     graph.connect(input_io0["strm_in"], input_tensor0);
+    graph.connect(input_io0["N"], N_input);
     graph.connect(input_io0["strm_out"], output_tensor0);
     graph.connect(output_io0["strm_in"], input_tensor0);
+    graph.connect(output_io0["N"], N_input);
     graph.connect(output_io0["strm_out"], output_tensor0);
 
     seq.add(poplar::program::Execute(io_in));
@@ -194,7 +204,7 @@ void tensorDecomp() {
 
     std::cout << "Loaded Device" << std::endl;
 
-    #pragma omp parallel sections
+    #pragma omp parallel sectionsa
     {
         #pragma omp section
         {
@@ -212,7 +222,7 @@ void tensorDecomp() {
                         // cpu_input0[j+(cols*i)] = distribution(gen);
                     }
                 }
-                printMatrix("GenMatrix", cpu_input0, cols);
+                printMatrix("Input Matrix", cpu_input0, cols);
                 data_ready_flag = true;
         }
 
@@ -222,7 +232,7 @@ void tensorDecomp() {
             data_ready_flag = false;
             engine.run(Progs::STREAM_INPUTS);
 
-            printMatrix("QMatrix", cpu_output0, cols);
+            printMatrix("Output Matrix", cpu_output0, cols);
         }
     }
     return;
