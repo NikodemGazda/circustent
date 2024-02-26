@@ -203,11 +203,11 @@ void tensorDecomp() {
     /***** UNCOMMENT FOR RAND *****/
     // seq.add(poplar::program::Copy(c2, randomIndices));
     randomIndices = poprand::uniform(graph, nullptr, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
-    std::cout << "randomIndices: " << endl;
+    std::cout << "randomIndices: " << std::endl;
     for (int i = 0; i < packet_size; i++) {
         std::cout << randomIndices[i] << " ";
         if ((i+1)%rows == 0) {
-            std::cout << endl;
+            std::cout << std::endl;
         }
     }
 
