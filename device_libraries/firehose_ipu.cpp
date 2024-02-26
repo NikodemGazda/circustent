@@ -174,6 +174,7 @@ void tensorDecomp() {
     // Streams
     auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", input_tensor0.elementType(), input_tensor0.numElements());
     auto output_strm0 = graph.addDeviceToHostFIFO("Output Stream 0", poplar::FLOAT, packet_size);
+    auto random_strm0 = graph.addDeviceToHostFIFO("Random Stream 0", poplar::INT, packet_size);
 
     std::cout << "Added Streams!" << std::endl;
 
@@ -229,8 +230,10 @@ void tensorDecomp() {
 
 
     for(int i = 0; i < num_transfers; i++) {
-        seq.add(poplar::program::Copy(output_tensor0, output_strm0));
+        seq.add(poplar::program::Copy(output_tensor0, random_strm0));
     }
+
+    seq.add(poplar::program::Copy(randomIndices, randomIndicesFIFO));
 
     progs[Progs::STREAM_INPUTS] = seq;
 
@@ -273,7 +276,19 @@ void tensorDecomp() {
             data_ready_flag = false;
             engine.run(Progs::STREAM_INPUTS);
 
+
             printMatrix("Output Matrix", cpu_output0, cols);
+
+            // reading random indices
+            std::vector<int> hostRandomIndices(packet_size);
+            engine.readFIFO(randomIndicesFIFO, hostRandomIndices.data(), packet_size);
+            std::cout << "randomIndices: " << std::endl;
+            for (int i = 0; i < packet_size; i++) {
+                std::cout << hostRandomIndices[i] << " ";
+                if ((i+1)%rows == 0) {
+                    std::cout << std::endl;
+                }
+            }
         }
     }
     return;
