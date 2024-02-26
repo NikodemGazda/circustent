@@ -138,7 +138,7 @@ void tensorDecomp() {
 
     /***** UNCOMMENT FOR RAND *****/
     // auto c2 = graph.addConstant<int>(poplar::INT, {packet_size}, {2, 6, 1, 1, 3, 5, 4, 3, 4});
-    auto c2 = graph.addConstant<int>(poplar::INT, {1}, {10});
+    auto c2 = graph.addConstant<int>(poplar::INT, {2}, {10, 7});
 
     std::cout << "Added Tensors!" << std::endl;
 
