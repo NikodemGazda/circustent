@@ -106,18 +106,33 @@ void tensorDecomp() {
     std::cout << "Adding Tensors..." << std::endl;
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
     auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
-    auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
+
+    /***** UNCOMMENT FOR STRIDEN *****/
+    // auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
+
+    /***** UNCOMMENT FOR RAND *****/
+    auto randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
 
     // constants
-    auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
+    /***** UNCOMMENT FOR STRIDEN *****/
+    // auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
+
+    /***** UNCOMMENT FOR RAND *****/
+    auto c2 = graph.addConstant<int>(poplar::INT, {packet_size}, {2, 6, 1, 1, 3, 5, 4, 3, 4});
 
     std::cout << "Added Tensors!" << std::endl;
 
     std::cout << "Mapping Tensors..." << std::endl;
     poputil::mapTensorLinearly(graph, input_tensor0);
     poputil::mapTensorLinearly(graph, output_tensor0);
-    poputil::mapTensorLinearly(graph, N_input);
-    poputil::mapTensorLinearly(graph, c1);
+
+    /***** UNCOMMENT FOR STRIDEN *****/
+    // poputil::mapTensorLinearly(graph, N_input);
+    // poputil::mapTensorLinearly(graph, c1);
+
+    /***** UNCOMMENT FOR RAND *****/
+    poputil::mapTensorLinearly(graph, randomIndices);
+    poputil::mapTensorLinearly(graph, c2);
 
     std::cout << "Mapped Tensors!" << std::endl;
 
@@ -127,7 +142,12 @@ void tensorDecomp() {
 
     // Add custom codelets
     // graph.addCodelets("./device_libraries/io_codelet.gp");
-    graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
+
+    /***** UNCOMMENT FOR STRIDEN *****/
+    // graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
+
+    /***** UNCOMMENT FOR RAND *****/
+    graph.addCodelets("./device_libraries/io_codelet_rand.gp");
 
     std::cout << "Added Codelets!" << std::endl;
 
@@ -174,15 +194,25 @@ void tensorDecomp() {
     }
 
     // copying N to the input tensor
-    seq.add(poplar::program::Copy(c1, N_input));
+    /***** UNCOMMENT FOR STRIDEN *****/
+    // seq.add(poplar::program::Copy(c1, N_input));
+
+    /***** UNCOMMENT FOR RAND *****/
+    seq.add(poplar::program::Copy(c2, randomIndices));
 
     graph.connect(input_io0["strm_in"], input_tensor0);
-    graph.connect(input_io0["N"], N_input);
     graph.connect(input_io0["strm_out"], output_tensor0);
     graph.connect(output_io0["strm_in"], input_tensor0);
-    graph.connect(output_io0["N"], N_input);
     graph.connect(output_io0["strm_out"], output_tensor0);
 
+    /***** UNCOMMENT FOR STRIDEN *****/
+    // graph.connect(input_io0["N"], N_input);
+    // graph.connect(output_io0["N"], N_input);
+
+    /***** UNCOMMENT FOR RAND *****/
+    graph.connect(input_io0["randomIndices"], N_input);
+    graph.connect(output_io0["randomIndices"], N_input);
+    
     seq.add(poplar::program::Execute(io_in));
 
 
