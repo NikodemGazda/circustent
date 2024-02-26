@@ -28,6 +28,23 @@ void printMatrix(std::string matrix_name, std::vector<float> matrix, int cols) {
 
 }
 
+void printMatrixInt(std::string matrix_name, std::vector<int> matrix, int cols) {
+  std::cout << matrix_name << std::endl;
+
+  for (int i = 0; i < matrix.size(); i++) {
+
+    std::cout << std::fixed << matrix[i] << "\t";
+    
+    if ( (i+1)%cols == 0) {
+      std::cout << std::endl;
+    }
+
+  }
+
+  std::cout << std::endl;
+
+}
+
 // void frontEnd_TensorDecomp(bool& flag, long unsigned int& rows, long unsigned int& cols, long unsigned int& exp_size, std::vector<float>& cpu_input0, std::vector<float>& cpu_output0, std::vector<float>& cpu_output1) {
 //     /* Create data to input into back-end */
 //     std::random_device rd;
@@ -282,7 +299,7 @@ void tensorDecomp() {
             printMatrix("Output Matrix", cpu_output0, cols);
 
             // reading random indices
-            printMatrix("Random Indices", cpu_output_rand, 9);
+            printMatrixInt("Random Indices", cpu_output_rand, 9);
         }
     }
     return;
