@@ -204,7 +204,7 @@ void tensorDecomp() {
 
     std::cout << "Loaded Device" << std::endl;
 
-    #pragma omp parallel sectionsa
+    #pragma omp parallel sections
     {
         #pragma omp section
         {
