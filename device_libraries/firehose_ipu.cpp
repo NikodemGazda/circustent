@@ -106,7 +106,7 @@ void tensorDecomp() {
     std::cout << "Adding Tensors..." << std::endl;
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
     auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
-    auto N_input = graph.addVariable(poplar::FLOAT, {1}, "N Input");
+    auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
 
     // constants
     auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
