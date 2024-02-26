@@ -281,7 +281,7 @@ void tensorDecomp() {
 
             // reading random indices
             std::vector<int> hostRandomIndices(packet_size);
-            engine.readFIFO(randomIndicesFIFO, hostRandomIndices.data(), packet_size);
+            engine.readFIFO(random_strm0, hostRandomIndices.data(), packet_size);
             std::cout << "randomIndices: " << std::endl;
             for (int i = 0; i < packet_size; i++) {
                 std::cout << hostRandomIndices[i] << " ";
