@@ -169,8 +169,8 @@ void tensorDecomp() {
     }
 
     graph.connect(input_io0["strm_in"], input_tensor0);
-    graph.connect(input_io0["strm_out"], input_tensor0);
-    graph.connect(output_io0["strm_in"], output_tensor0);
+    graph.connect(input_io0["strm_out"], output_tensor0);
+    graph.connect(output_io0["strm_in"], input_tensor0);
     graph.connect(output_io0["strm_out"], output_tensor0);
 
     seq.add(poplar::program::Execute(io_in));
@@ -209,7 +209,7 @@ void tensorDecomp() {
                 for (int i = 0; i < rows; i++) {
                     for (int j = 0; j < cols; j++) {
                         cpu_input0[j+(cols*i)] = 1;
-                        cpu_input0[j+(cols*i)] = distribution(gen);
+                        // cpu_input0[j+(cols*i)] = distribution(gen);
                     }
                 }
                 printMatrix("GenMatrix", cpu_input0, cols);
