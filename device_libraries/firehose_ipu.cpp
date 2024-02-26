@@ -210,8 +210,8 @@ void tensorDecomp() {
     // graph.connect(output_io0["N"], N_input);
 
     /***** UNCOMMENT FOR RAND *****/
-    graph.connect(input_io0["randomIndices"], N_input);
-    graph.connect(output_io0["randomIndices"], N_input);
+    graph.connect(input_io0["randomIndices"], randomIndices);
+    graph.connect(output_io0["randomIndices"], randomIndices);
     
     seq.add(poplar::program::Execute(io_in));
 
