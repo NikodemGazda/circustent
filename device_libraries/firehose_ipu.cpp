@@ -233,7 +233,7 @@ void tensorDecomp() {
         seq.add(poplar::program::Copy(output_tensor0, random_strm0));
     }
 
-    seq.add(poplar::program::Copy(randomIndices, randomIndicesFIFO));
+    seq.add(poplar::program::Copy(randomIndices, random_strm0));
 
     progs[Progs::STREAM_INPUTS] = seq;
 
