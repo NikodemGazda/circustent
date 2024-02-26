@@ -130,15 +130,14 @@ void tensorDecomp() {
     // auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
 
     /***** UNCOMMENT FOR RAND *****/
-    auto randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
+    // auto randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
 
     // constants
     /***** UNCOMMENT FOR STRIDEN *****/
     // auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
 
     /***** UNCOMMENT FOR RAND *****/
-    // auto c2 = graph.addConstant<int>(poplar::INT, {packet_size}, {2, 6, 1, 1, 3, 5, 4, 3, 4});
-    auto c2 = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7});
+    // auto c2 = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
 
     std::cout << "Added Tensors!" << std::endl;
 
@@ -151,8 +150,8 @@ void tensorDecomp() {
     // poputil::mapTensorLinearly(graph, c1);
 
     /***** UNCOMMENT FOR RAND *****/
-    poputil::mapTensorLinearly(graph, randomIndices);
-    poputil::mapTensorLinearly(graph, c2);
+    // poputil::mapTensorLinearly(graph, randomIndices);
+    // poputil::mapTensorLinearly(graph, c2);
 
     std::cout << "Mapped Tensors!" << std::endl;
 
@@ -161,14 +160,15 @@ void tensorDecomp() {
     popops::addCodelets(graph);
 
     // Add custom codelets
-    // graph.addCodelets("./device_libraries/io_codelet.gp");
+    /***** UNCOMMENT FOR STRIDE *****/
+    graph.addCodelets("./device_libraries/io_codelet.gp");
 
     /***** UNCOMMENT FOR STRIDEN *****/
     // graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
 
     /***** UNCOMMENT FOR RAND *****/
-    poprand::addCodelets(graph);
-    graph.addCodelets("./device_libraries/io_codelet_rand.gp");
+    // poprand::addCodelets(graph);
+    // graph.addCodelets("./device_libraries/io_codelet_rand.gp");
 
     std::cout << "Added Codelets!" << std::endl;
 
@@ -192,7 +192,9 @@ void tensorDecomp() {
     // Streams
     auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", input_tensor0.elementType(), input_tensor0.numElements());
     auto output_strm0 = graph.addDeviceToHostFIFO("Output Stream 0", poplar::FLOAT, packet_size);
-    auto random_strm0 = graph.addDeviceToHostFIFO("Random Stream 0", poplar::INT, packet_size);
+    
+    /***** UNCOMMENT FOR RAND *****/
+    // auto random_strm0 = graph.addDeviceToHostFIFO("Random Stream 0", poplar::INT, packet_size);
 
     std::cout << "Added Streams!" << std::endl;
 
@@ -206,7 +208,9 @@ void tensorDecomp() {
     // CPU Vectors
     std::vector<float> cpu_input0(rows*cols);
     std::vector<float> cpu_output0(rows*cols);
-    std::vector<int> cpu_output_rand(packet_size);
+
+    /***** UNCOMMENT FOR RAND *****/
+    // std::vector<int> cpu_output_rand(packet_size);
 
     /* Stream Inputs Program */
 
@@ -221,8 +225,7 @@ void tensorDecomp() {
     // seq.add(poplar::program::Copy(c1, N_input));
 
     /***** UNCOMMENT FOR RAND *****/
-    // seq.add(poplar::program::Copy(c2, randomIndices));
-    randomIndices = poprand::uniform(graph, &c2, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
+    // randomIndices = poprand::uniform(graph, &c2, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
 
     graph.connect(input_io0["strm_in"], input_tensor0);
     graph.connect(input_io0["strm_out"], output_tensor0);
@@ -234,8 +237,8 @@ void tensorDecomp() {
     // graph.connect(output_io0["N"], N_input);
 
     /***** UNCOMMENT FOR RAND *****/
-    graph.connect(input_io0["randomIndices"], randomIndices);
-    graph.connect(output_io0["randomIndices"], randomIndices);
+    // graph.connect(input_io0["randomIndices"], randomIndices);
+    // graph.connect(output_io0["randomIndices"], randomIndices);
     
     seq.add(poplar::program::Execute(io_in));
 
@@ -257,7 +260,9 @@ void tensorDecomp() {
 
     engine.connectStream("Input Stream 0", cpu_input0.data(), cpu_input0.data() + cpu_input0.size());
     engine.connectStream("Output Stream 0", cpu_output0.data(), cpu_output0.data() + cpu_output0.size());
-    engine.connectStream("Random Stream 0", cpu_output_rand.data(), cpu_output_rand.data() + cpu_output_rand.size());
+
+    /***** UNCOMMENT FOR RAND *****/
+    // engine.connectStream("Random Stream 0", cpu_output_rand.data(), cpu_output_rand.data() + cpu_output_rand.size());
 
     std::cout << "Loaded Device" << std::endl;
 
@@ -292,8 +297,9 @@ void tensorDecomp() {
 
             printMatrix("Output Matrix", cpu_output0, cols);
 
+            /***** UNCOMMENT FOR RAND *****/
             // reading random indices
-            printMatrixInt("Random Indices", cpu_output_rand, 9);
+            // printMatrixInt("Random Indices", cpu_output_rand, 9);
         }
     }
     return;
