@@ -221,7 +221,7 @@ void tensorDecomp() {
 
     /***** UNCOMMENT FOR RAND *****/
     // seq.add(poplar::program::Copy(c2, randomIndices));
-    randomIndices = poprand::uniform(graph, nullptr, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
+    randomIndices = poprand::uniform(graph, 10, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
 
     graph.connect(input_io0["strm_in"], input_tensor0);
     graph.connect(input_io0["strm_out"], output_tensor0);
