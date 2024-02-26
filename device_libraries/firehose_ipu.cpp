@@ -188,6 +188,7 @@ void tensorDecomp() {
     // CPU Vectors
     std::vector<float> cpu_input0(rows*cols);
     std::vector<float> cpu_output0(rows*cols);
+    std::vector<int> cpu_output_rand(packet_size);
 
     /* Stream Inputs Program */
 
@@ -245,6 +246,7 @@ void tensorDecomp() {
 
     engine.connectStream("Input Stream 0", cpu_input0.data(), cpu_input0.data() + cpu_input0.size());
     engine.connectStream("Output Stream 0", cpu_output0.data(), cpu_output0.data() + cpu_output0.size());
+    engine.connectStream("Random Stream 0", cpu_output_rand.data(), cpu_output_rand.data() + cpu_output_rand.size());
 
     std::cout << "Loaded Device" << std::endl;
 
@@ -280,15 +282,7 @@ void tensorDecomp() {
             printMatrix("Output Matrix", cpu_output0, cols);
 
             // reading random indices
-            std::vector<int> hostRandomIndices(packet_size);
-            engine.readFIFO(random_strm0, hostRandomIndices.data(), packet_size);
-            std::cout << "randomIndices: " << std::endl;
-            for (int i = 0; i < packet_size; i++) {
-                std::cout << hostRandomIndices[i] << " ";
-                if ((i+1)%rows == 0) {
-                    std::cout << std::endl;
-                }
-            }
+            printMatrix("Random Indices", cpu_output_rand, 9);
         }
     }
     return;
