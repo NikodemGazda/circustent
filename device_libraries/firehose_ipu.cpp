@@ -1,6 +1,4 @@
 #include "firehose_ipu.hpp"
-#include <poprand/codelets.hpp>
-#include <poprand/RandomGen.hpp>
 
 enum Progs {
     STREAM_INPUTS,
