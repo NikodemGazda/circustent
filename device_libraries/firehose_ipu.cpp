@@ -137,7 +137,8 @@ void tensorDecomp() {
     // auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
 
     /***** UNCOMMENT FOR RAND *****/
-    auto c2 = graph.addConstant<int>(poplar::INT, {packet_size}, {2, 6, 1, 1, 3, 5, 4, 3, 4});
+    // auto c2 = graph.addConstant<int>(poplar::INT, {packet_size}, {2, 6, 1, 1, 3, 5, 4, 3, 4});
+    auto c2 = graph.addConstant<int>(poplar::INT, {1}, {10});
 
     std::cout << "Added Tensors!" << std::endl;
 
@@ -221,7 +222,7 @@ void tensorDecomp() {
 
     /***** UNCOMMENT FOR RAND *****/
     // seq.add(poplar::program::Copy(c2, randomIndices));
-    randomIndices = poprand::uniform(graph, 10, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
+    randomIndices = poprand::uniform(graph, &c2, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
 
     graph.connect(input_io0["strm_in"], input_tensor0);
     graph.connect(input_io0["strm_out"], output_tensor0);
