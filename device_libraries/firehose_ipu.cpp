@@ -132,22 +132,14 @@ void tensorDecomp() {
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
     auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
 
-    if (MODERUN == STRIDEN) {
-      auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
-    }
+    auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
 
-    if (MODERUN == RAND) {
-      auto randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
-    }
+    auto randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
 
     // constants
-    if (MODERUN == STRIDEN) {
-      auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
-    }
+    auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
 
-    if (MODERUN == RAND) {
-      auto c2 = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
-    }
+    auto c2 = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
 
     std::cout << "Added Tensors!" << std::endl;
 
