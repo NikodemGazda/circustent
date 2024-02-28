@@ -1,5 +1,13 @@
 #include "firehose_ipu.hpp"
 
+#define MODERUN STRIDE1
+
+enum mode {
+    STRIDEN,
+    STRIDE1,
+    RAND
+};
+
 enum Progs {
     STREAM_INPUTS,
     // ALIGN_INPUTS,
@@ -124,18 +132,22 @@ void tensorDecomp() {
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
     auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
 
-    /***** UNCOMMENT FOR STRIDEN *****/
-    // auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
+    if (MODERUN == STRIDEN) {
+      auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
+    }
 
-    /***** UNCOMMENT FOR RAND *****/
-    // auto randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
+    if (MODERUN == RAND) {
+      auto randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
+    }
 
     // constants
-    /***** UNCOMMENT FOR STRIDEN *****/
-    // auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
+    if (MODERUN == STRIDEN) {
+      auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
+    }
 
-    /***** UNCOMMENT FOR RAND *****/
-    // auto c2 = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
+    if (MODERUN == RAND) {
+      auto c2 = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
+    }
 
     std::cout << "Added Tensors!" << std::endl;
 
@@ -143,14 +155,16 @@ void tensorDecomp() {
     poputil::mapTensorLinearly(graph, input_tensor0);
     poputil::mapTensorLinearly(graph, output_tensor0);
 
-    /***** UNCOMMENT FOR STRIDEN *****/
-    // poputil::mapTensorLinearly(graph, N_input);
-    // poputil::mapTensorLinearly(graph, c1);
+    if (MODERUN == STRIDEN) {
+      poputil::mapTensorLinearly(graph, N_input);
+      poputil::mapTensorLinearly(graph, c1);
+    }
 
-    /***** UNCOMMENT FOR RAND *****/
-    // poputil::mapTensorLinearly(graph, randomIndices);
-    // poputil::mapTensorLinearly(graph, c2);
-
+    if (MODERUN == RAND) {
+      poputil::mapTensorLinearly(graph, randomIndices);
+      poputil::mapTensorLinearly(graph, c2);
+    }
+    
     std::cout << "Mapped Tensors!" << std::endl;
 
     std::cout << "Adding Codelets..." << std::endl;
@@ -158,15 +172,18 @@ void tensorDecomp() {
     popops::addCodelets(graph);
 
     // Add custom codelets
-    /***** UNCOMMENT FOR STRIDE *****/
-    graph.addCodelets("./device_libraries/io_codelet.gp");
+    if (MODERUN == STRIDE) {
+      graph.addCodelets("./device_libraries/io_codelet.gp");
+    }
 
-    /***** UNCOMMENT FOR STRIDEN *****/
-    // graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
+    if (MODERUN == STRIDEN) {
+      graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
+    }
 
-    /***** UNCOMMENT FOR RAND *****/
-    // poprand::addCodelets(graph);
-    // graph.addCodelets("./device_libraries/io_codelet_rand.gp");
+    if (MODERUN == RAND) {
+      poprand::addCodelets(graph);
+      graph.addCodelets("./device_libraries/io_codelet_rand.gp");
+    }
 
     std::cout << "Added Codelets!" << std::endl;
 
@@ -191,8 +208,9 @@ void tensorDecomp() {
     auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", input_tensor0.elementType(), input_tensor0.numElements());
     auto output_strm0 = graph.addDeviceToHostFIFO("Output Stream 0", poplar::FLOAT, packet_size);
     
-    /***** UNCOMMENT FOR RAND *****/
-    // auto random_strm0 = graph.addDeviceToHostFIFO("Random Stream 0", poplar::INT, packet_size);
+    if (MODERUN == RAND) {
+      auto random_strm0 = graph.addDeviceToHostFIFO("Random Stream 0", poplar::INT, packet_size);
+    }
 
     std::cout << "Added Streams!" << std::endl;
 
@@ -207,8 +225,9 @@ void tensorDecomp() {
     std::vector<float> cpu_input0(rows*cols);
     std::vector<float> cpu_output0(rows*cols);
 
-    /***** UNCOMMENT FOR RAND *****/
-    // std::vector<int> cpu_output_rand(packet_size);
+    if (MODERUN == RAND) {
+      std::vector<int> cpu_output_rand(packet_size);
+    }
 
     /* Stream Inputs Program */
 
@@ -219,25 +238,29 @@ void tensorDecomp() {
     }
 
     // copying N to the input tensor
-    /***** UNCOMMENT FOR STRIDEN *****/
-    // seq.add(poplar::program::Copy(c1, N_input));
+    if (MODERUN == STRIDEN) {
+      seq.add(poplar::program::Copy(c1, N_input));
+    }
 
-    /***** UNCOMMENT FOR RAND *****/
-    // randomIndices = poprand::uniform(graph, &c2, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
+    if (MODERUN == RAND) {
+      randomIndices = poprand::uniform(graph, &c2, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
+    }
 
     graph.connect(input_io0["strm_in"], input_tensor0);
     graph.connect(input_io0["strm_out"], output_tensor0);
     graph.connect(output_io0["strm_in"], input_tensor0);
     graph.connect(output_io0["strm_out"], output_tensor0);
 
-    /***** UNCOMMENT FOR STRIDEN *****/
-    // graph.connect(input_io0["N"], N_input);
-    // graph.connect(output_io0["N"], N_input);
+    if (MODERUN == STRIDEN) {
+      graph.connect(input_io0["N"], N_input);
+      graph.connect(output_io0["N"], N_input);
+    }
 
-    /***** UNCOMMENT FOR RAND *****/
-    // graph.connect(input_io0["randomIndices"], randomIndices);
-    // graph.connect(output_io0["randomIndices"], randomIndices);
-    
+    if (MODERUN == RAND) {
+      graph.connect(input_io0["randomIndices"], randomIndices);
+      graph.connect(output_io0["randomIndices"], randomIndices);
+    }
+
     seq.add(poplar::program::Execute(io_in));
 
 
@@ -246,8 +269,9 @@ void tensorDecomp() {
         seq.add(poplar::program::Copy(output_tensor0, output_strm0));
     }
 
-    /***** UNCOMMENT FOR RAND *****/
-    // seq.add(poplar::program::Copy(randomIndices, random_strm0));
+    if (MODERUN == RAND) {
+      seq.add(poplar::program::Copy(randomIndices, random_strm0));
+    }
 
     progs[Progs::STREAM_INPUTS] = seq;
 
@@ -260,8 +284,9 @@ void tensorDecomp() {
     engine.connectStream("Input Stream 0", cpu_input0.data(), cpu_input0.data() + cpu_input0.size());
     engine.connectStream("Output Stream 0", cpu_output0.data(), cpu_output0.data() + cpu_output0.size());
 
-    /***** UNCOMMENT FOR RAND *****/
-    // engine.connectStream("Random Stream 0", cpu_output_rand.data(), cpu_output_rand.data() + cpu_output_rand.size());
+    if (MODERUN == RAND) {
+      engine.connectStream("Random Stream 0", cpu_output_rand.data(), cpu_output_rand.data() + cpu_output_rand.size());
+    }
 
     std::cout << "Loaded Device" << std::endl;
 
@@ -296,9 +321,10 @@ void tensorDecomp() {
 
             printMatrix("Output Matrix", cpu_output0, cols);
 
-            /***** UNCOMMENT FOR RAND *****/
-            // reading random indices
-            // printMatrixInt("Random Indices", cpu_output_rand, 9);
+            if (MODERUN == RAND) {
+              // reading random indices
+              printMatrixInt("Random Indices", cpu_output_rand, 9);
+            }
         }
     }
     return;
