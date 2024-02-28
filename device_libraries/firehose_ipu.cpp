@@ -174,8 +174,8 @@ void tensorDecomp() {
       graph.addCodelets("./device_libraries/io_codelet_strideN.gp");
     }
 
+    poprand::addCodelets(graph);
     if (MODERUN == RAND) {
-      poprand::addCodelets(graph);
       graph.addCodelets("./device_libraries/io_codelet_rand.gp");
     }
 
