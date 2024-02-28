@@ -132,13 +132,17 @@ void tensorDecomp() {
     auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
     auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
 
+    //**** STRIDE N ****//
     auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
 
+    //**** RAND ****//
     auto randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
 
     // constants
+    //**** STRIDE N ****//
     auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
 
+    //**** RAND ****//
     auto c2 = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
 
     std::cout << "Added Tensors!" << std::endl;
@@ -147,15 +151,13 @@ void tensorDecomp() {
     poputil::mapTensorLinearly(graph, input_tensor0);
     poputil::mapTensorLinearly(graph, output_tensor0);
 
-    if (MODERUN == STRIDEN) {
-      poputil::mapTensorLinearly(graph, N_input);
-      poputil::mapTensorLinearly(graph, c1);
-    }
+    //**** STRIDE N ****//
+    poputil::mapTensorLinearly(graph, N_input);
+    poputil::mapTensorLinearly(graph, c1);
 
-    if (MODERUN == RAND) {
-      poputil::mapTensorLinearly(graph, randomIndices);
-      poputil::mapTensorLinearly(graph, c2);
-    }
+    //**** RAND ****//
+    poputil::mapTensorLinearly(graph, randomIndices);
+    poputil::mapTensorLinearly(graph, c2);
     
     std::cout << "Mapped Tensors!" << std::endl;
 
@@ -200,9 +202,8 @@ void tensorDecomp() {
     auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", input_tensor0.elementType(), input_tensor0.numElements());
     auto output_strm0 = graph.addDeviceToHostFIFO("Output Stream 0", poplar::FLOAT, packet_size);
     
-    if (MODERUN == RAND) {
-      auto random_strm0 = graph.addDeviceToHostFIFO("Random Stream 0", poplar::INT, packet_size);
-    }
+    //**** RAND ****//
+    auto random_strm0 = graph.addDeviceToHostFIFO("Random Stream 0", poplar::INT, packet_size);
 
     std::cout << "Added Streams!" << std::endl;
 
@@ -217,9 +218,8 @@ void tensorDecomp() {
     std::vector<float> cpu_input0(rows*cols);
     std::vector<float> cpu_output0(rows*cols);
 
-    if (MODERUN == RAND) {
-      std::vector<int> cpu_output_rand(packet_size);
-    }
+    //**** RAND ****//
+    std::vector<int> cpu_output_rand(packet_size);
 
     /* Stream Inputs Program */
 
@@ -234,9 +234,8 @@ void tensorDecomp() {
       seq.add(poplar::program::Copy(c1, N_input));
     }
 
-    if (MODERUN == RAND) {
-      randomIndices = poprand::uniform(graph, &c2, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
-    }
+    //**** RAND ****//
+    randomIndices = poprand::uniform(graph, &c2, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
 
     graph.connect(input_io0["strm_in"], input_tensor0);
     graph.connect(input_io0["strm_out"], output_tensor0);
