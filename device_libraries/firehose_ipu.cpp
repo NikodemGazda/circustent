@@ -1,6 +1,6 @@
 #include "firehose_ipu.hpp"
 
-#define MODERUN STRIDE1
+#define MODERUN STRIDE
 
 enum mode {
     STRIDEN,
