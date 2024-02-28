@@ -1,4 +1,4 @@
-#include "device_libraries/firehose_ipu.hpp"
+#include "device_libraries/circustent_ipu.hpp"
 
 int main() {
     std::cout << "BEGIN" << std::endl;

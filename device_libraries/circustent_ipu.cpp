@@ -1,6 +1,6 @@
-#include "firehose_ipu.hpp"
+#include "circustent_ipu.hpp"
 
-#define MODERUN STRIDE
+#define MODERUN RAND
 
 enum mode {
     STRIDEN,

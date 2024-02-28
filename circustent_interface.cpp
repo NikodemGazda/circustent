@@ -19,7 +19,7 @@ void configure_benchmark(int fe_device, int be_device, int consumption_task, int
     string cm_cwd = cwd;
 
     string cm_compiler = "--std=c++11";
-    string cm_firehose = "firehose_main.cpp";
+    string cm_circustent = "circustent_main.cpp";
     string cm_library_loc = "-L./device_libraries";
     string cm_library = "";
     switch(be_device) {
@@ -32,7 +32,7 @@ void configure_benchmark(int fe_device, int be_device, int consumption_task, int
         cout << "error: no be_device argument passed..." << endl;
         return;
     }
-    string cm_output = "-o firehose";
+    string cm_output = "-o circustent";
 
     pid_t pid = fork();
 
@@ -50,7 +50,7 @@ void configure_benchmark(int fe_device, int be_device, int consumption_task, int
     }
     else {
         // Child process
-        execlp("g++", "g++", cm_compiler.c_str(), cm_firehose.c_str(), cm_library_loc.c_str(), cm_library.c_str(), cm_output.c_str(), NULL);
+        execlp("g++", "g++", cm_compiler.c_str(), cm_circustent.c_str(), cm_library_loc.c_str(), cm_library.c_str(), cm_output.c_str(), NULL);
         // If execvp returns, an error occurred
         std::cerr << "Error executing compiler" << std::endl;
         _exit(1);  // Use _exit in child to avoid flushing buffers
@@ -62,7 +62,7 @@ void configure_benchmark(int fe_device, int be_device, int consumption_task, int
 int main() {
 
 int fe_device = 0;
-cout << "Welcome to the FireHose Interface. What device will be the front-end?" << endl;
+cout << "Welcome to the Circus Tent Interface. What device will be the front-end?" << endl;
 cout << "1. CPU" << endl;
 cout << "2. Graphcore IPU" << endl;
 cout << "Selected Device: ";
