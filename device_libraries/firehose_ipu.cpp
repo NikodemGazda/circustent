@@ -4,7 +4,7 @@
 
 enum mode {
     STRIDEN,
-    STRIDE1,
+    STRIDE,
     RAND
 };
 
