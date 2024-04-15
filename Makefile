@@ -25,3 +25,7 @@ clean:
 	rm circustent
 	rm ./device_libraries/mylib.o
 	rm tensor_decomp_test_*
+
+run:
+	sbatch demo.batch
+	watch squeue -u ngazda
