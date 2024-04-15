@@ -7,9 +7,13 @@ using namespace poplar;
 class IOVertex : public Vertex {
 public:
 
-Input<Vector<float>> strm_in;
-Input<Vector<int>> randomIndices;
-Output<Vector<float>> strm_out;
+// Input<Vector<float>> strm_in;
+// Input<Vector<int>> randomIndices;
+// Output<Vector<float>> strm_out;
+
+Vector<Input<Vector<float>>> strm_in;
+Vector<Input<Vector<int>>> randomIndices;
+Vector<Output<Vector<float>>> strm_out;
 
 // function:
 // rand

@@ -5,10 +5,13 @@ using namespace poplar;
 class IOVertex : public Vertex {
 public:
 
-Input<Vector<float>> strm_in;
-//Input<Vector<int>> ready_flag;
-//Input<Vector<int>> num_elements;
-Output<Vector<float>> strm_out;
+// Input<Vector<float>> strm_in;
+// //Input<Vector<int>> ready_flag;
+// //Input<Vector<int>> num_elements;
+// Output<Vector<float>> strm_out;
+
+Vector<Input<Vector<float>>> strm_in;
+Vector<Output<Vector<float>>> strm_out;
 
 // function:
 // stride1

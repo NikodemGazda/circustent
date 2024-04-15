@@ -1,5 +1,7 @@
 #include "circustent_ipu.hpp"
 
+#define num_programs 3  
+
 #define MODERUN RAND
 
 enum mode {
@@ -8,96 +10,80 @@ enum mode {
     RAND
 };
 
-enum Progs {
-    STREAM_INPUTS,
-    // ALIGN_INPUTS,
-    // CONSUMPTION_TASK,
-    // ALIGN_OUTPUTS,
-    // STREAM_OUTPUTS,
-    NUM_PROGRAMS
-};
+void printMatrix(std::string matrix_name, std::vector<float> matrix, int cols, int id, int packet, int io) {
 
-void printMatrix(std::string matrix_name, std::vector<float> matrix, int cols) {
-  std::cout << matrix_name << std::endl;
+    std::string fileName;
+  switch(io) {
+    case 0:
+        fileName = "IPU_INPUTS" + std::to_string(id) + ".out";
+        break;
+    default:
+        fileName = "IPU_OUTPUTS" + std::to_string(id) + ".out";
+        break;
+  }
+  std::ofstream fileStream(fileName, std::ios::app);
+  fileStream << matrix_name << " THREAD " << id << " PACKET " << packet << std::endl;
+  //std::cout << matrix_name << " THREAD " << id << " PACKET " << packet << std::endl;
 
   for (int i = 0; i < matrix.size(); i++) {
 
-    std::cout << std::fixed << matrix[i] << "\t";
+    fileStream << std::fixed << matrix[i] << "\t";
+    //std::cout << std::fixed << matrix[i] << "\t";
     
     if ( (i+1)%cols == 0) {
-      std::cout << std::endl;
+      fileStream << std::endl;
+      //std::cout << std::endl;
     }
 
   }
 
-  std::cout << std::endl;
+  fileStream << std::endl;
+  fileStream.close();
+  //std::cout << std::endl;
 
 }
 
-void printMatrixInt(std::string matrix_name, std::vector<int> matrix, int cols) {
-  std::cout << matrix_name << std::endl;
+void printMatrixInt(std::string matrix_name, std::vector<int> matrix, int cols, int id, int packet, int io) {
+
+    std::string fileName;
+  switch(io) {
+    case 0:
+        fileName = "IPU_INPUTS" + std::to_string(id) + ".out";
+        break;
+    default:
+        fileName = "IPU_OUTPUTS" + std::to_string(id) + ".out";
+        break;
+  }
+  std::ofstream fileStream(fileName, std::ios::app);
+  fileStream << matrix_name << " THREAD " << id << " PACKET " << packet << std::endl;
+  //std::cout << matrix_name << " THREAD " << id << " PACKET " << packet << std::endl;
 
   for (int i = 0; i < matrix.size(); i++) {
 
-    std::cout << std::fixed << matrix[i] << "\t";
+    fileStream << std::fixed << matrix[i] << "\t";
+    //std::cout << std::fixed << matrix[i] << "\t";
     
     if ( (i+1)%cols == 0) {
-      std::cout << std::endl;
+      fileStream << std::endl;
+      //std::cout << std::endl;
     }
 
   }
 
-  std::cout << std::endl;
+  fileStream << std::endl;
+  fileStream.close();
+  //std::cout << std::endl;
 
 }
 
-// void frontEnd_TensorDecomp(bool& flag, long unsigned int& rows, long unsigned int& cols, long unsigned int& exp_size, std::vector<float>& cpu_input0, std::vector<float>& cpu_output0, std::vector<float>& cpu_output1) {
-//     /* Create data to input into back-end */
-//     std::random_device rd;
-//     std::mt19937 gen(rd());
-//     std::uniform_real_distribution<float> distribution(0.0f, 100.0f);
+void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned int num_packets, long unsigned int num_streams, long unsigned int num_devices, bool get_from_file) {
 
-//     for (int i = 0; i < rows; i++) {
-//         for (int j = 0; j < cols; j++) {
-//             cpu_input0[j+(cols*i)] = distribution(gen);
-//         }
-//     }
-//     printMatrix("GenMatrix", cpu_input0, cols);
+    /* Get an IPU Device */
 
-//     flag = true;
-//     /* Loop to create multiple matrices and decompose */
-//     for (int i = 0; i < exp_size; i++) {
-        
-//         for (int i = 0; i < rows; i++) {
-//             for (int j = 0; j < cols; j++) {
-//                 cpu_input0[j+(cols*i)] = distribution(gen);
-//             }
-//         }
-
-//         while(flag) {}
-//         printMatrix("QMatrix", cpu_output0, cols);
-//         printMatrix("RMatrix", cpu_output1, cols);
-//         sleep(1);
-//     }
-// }
-
-// void backEnd_TensorDecomp(poplar::Engine& engine, bool& flag, long unsigned int& exp_size) {
-//     for (int i = 0; i < exp_size; i++) {
-//         while(!flag) {}
-//         flag = false;
-//         engine.run(Progs::STREAM_INPUTS);
-//         engine.run(Progs::ALIGN_INPUTS);
-//         engine.run(Progs::CONSUMPTION_TASK);
-//         engine.run(Progs::ALIGN_OUTPUTS);
-//         engine.run(Progs::STREAM_OUTPUTS);
-//     }
-// }
-
-void tensorDecomp() {
     std::cout << "Getting Device..." << std::endl;
-    // Get an IPU Device
+
     auto manager = poplar::DeviceManager::createDeviceManager();
-    auto hwDevices = manager.getDevices(poplar::TargetType::IPU, 1);
+    auto hwDevices = manager.getDevices(poplar::TargetType::IPU, num_devices);
     auto it = std::find_if(hwDevices.begin(), hwDevices.end(), [](poplar::Device &device) { return device.attach(); });
     poplar::Device device;
 
@@ -115,57 +101,96 @@ void tensorDecomp() {
     std::cout << "Created Graph!" << std::endl;
 
     // Programs
-    std::vector<poplar::program::Program> progs(Progs::NUM_PROGRAMS);
+    std::vector<poplar::program::Program> progs(num_streams*num_programs);
 
     // Flags
-    bool data_ready_flag = false;
+    bool data_ready_flags[num_streams];
 
-    // Parameters
-    long unsigned int rows = 3;
-    long unsigned int cols = 3;
-    long unsigned int packet_size = 9;
-    long unsigned int num_transfers = (rows*cols) /packet_size;
-    long unsigned int exp_size = 1;
+    for (int i = 0; i < num_streams; i++) {
+        data_ready_flags[i] = false;
+    }
 
-    // Tensors
+    // Variable Tensors
     std::cout << "Adding Tensors..." << std::endl;
-    auto input_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Input Tensor 0");
-    auto output_tensor0 = graph.addVariable(poplar::FLOAT, {packet_size}, "Output Tensor 0");
+
+    std::vector<poplar::Tensor> v_io_in0(num_streams);
+    // std::vector<poplar::Tensor> v_con0(num_streams);
+    std::vector<poplar::Tensor> v_io_out0(num_streams);
 
     //**** STRIDE N ****//
-    auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
+    std::vector<poplar::Tensor> v_con_N_input = graph.addVariable(poplar::INT, {1}, "N Input");
+    auto c_con_N_input = graph.addConstant<int>(poplar::INT, {1}, {2});
+    // auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
 
     //**** RAND ****//
-    auto randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
+    std::vector<poplar::Tensor> v_con_randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
+    auto c_con_rand_seed = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
+    // auto randomIndices = graph.addVariable(poplar::INT, {row*col}, "randomIndices");
 
-    // constants
+    // mapping tensors/constants
     //**** STRIDE N ****//
-    auto c1 = graph.addConstant<int>(poplar::INT, {1}, {2});
-
+    poputil::mapTensorLinearly(graph, v_con_N_input);
+    poputil::mapTensorLinearly(graph, c_con_N_input);
     //**** RAND ****//
-    auto c2 = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
+    poputil::mapTensorLinearly(graph, v_con_randomIndices);
+    poputil::mapTensorLinearly(graph, c_con_rand_seed);
+
+    // std::vector<poplar::Tensor> v_con1(num_streams);
+    // std::vector<poplar::Tensor> v_io_out1(num_streams);
+
+    std::string db_name;
+
+    for (int i = 0; i < num_streams; i++) {
+
+        /* Input to QR Factorization */
+        db_name = "Input Tensor " + std::to_string(i) + " of Set 0";
+        v_io_in0[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
+        poputil::mapTensorLinearly(graph, v_io_in0[i]);
+
+        // db_name = "Consumption Tensor " + std::to_string(i) + " of Set 0";
+        // v_con0[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
+        // poputil::mapTensorLinearly(graph, v_con0[i]);
+
+        db_name = "Output Tensor " + std::to_string(i) + " of Set 0";
+        v_io_out0[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
+        poputil::mapTensorLinearly(graph, v_io_out0[i]);
+
+        // /* Necessary Identity to QR Factorization */
+        // db_name = "Consumption Tensor" + std::to_string(i) + " of Set 1";
+        // v_con1[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
+        // poputil::mapTensorLinearly(graph, v_con1[i]);
+
+        // db_name = "Output Tensor " + std::to_string(i) + " of Set 1";
+        // v_io_out1[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
+        // poputil::mapTensorLinearly(graph, v_io_out1[i]);
+    }
+
+    // // Constant Tensors
+    // std::vector<float> vec_id;
+
+    // for (int i = 0; i < row; i++) {
+    //     for (int j = 0; j < col; j++) {
+    //         if (i == j) {
+    //             vec_id.push_back(1.0);
+    //         }
+    //         else {
+    //             vec_id.push_back(0.0);
+    //         }
+    //     }
+    // }
+
+    // auto c_id = graph.addConstant<float>(poplar::FLOAT, {row, col}, vec_id.data(), "Constant Identity Tensor");
+    // poputil::mapTensorLinearly(graph, c_id);
 
     std::cout << "Added Tensors!" << std::endl;
 
-    std::cout << "Mapping Tensors..." << std::endl;
-    poputil::mapTensorLinearly(graph, input_tensor0);
-    poputil::mapTensorLinearly(graph, output_tensor0);
-
-    //**** STRIDE N ****//
-    poputil::mapTensorLinearly(graph, N_input);
-    poputil::mapTensorLinearly(graph, c1);
-
-    //**** RAND ****//
-    poputil::mapTensorLinearly(graph, randomIndices);
-    poputil::mapTensorLinearly(graph, c2);
-    
-    std::cout << "Mapped Tensors!" << std::endl;
-
-    std::cout << "Adding Codelets..." << std::endl;
     // Add standard codelets
+    std::cout << "Adding Codelets..." << std::endl;
+
     popops::addCodelets(graph);
 
     // Add custom codelets
+    // graph.addCodelets("./device_libraries/io_codelet.gp");
     if (MODERUN == STRIDE) {
       graph.addCodelets("./device_libraries/io_codelet.gp");
     }
@@ -181,142 +206,285 @@ void tensorDecomp() {
 
     std::cout << "Added Codelets!" << std::endl;
 
-    std::cout << "Adding Vertices..." << std::endl;
     // Vertices
-    //auto consumption_task_cs = graph.addComputeSet("Consumption Task CS");
-    auto io_in = graph.addComputeSet("IO in CS");
-    auto io_out = graph.addComputeSet("IO out CS");
-    auto input_io0 = graph.addVertex(io_in, "IOVertex");
-    auto output_io0 = graph.addVertex(io_out, "IOVertex");
+    std::cout << "Adding Vertices..." << std::endl;
+
+    // std::vector<poplar::ComputeSet> cps_io_in(num_streams);
+    // std::vector<poplar::ComputeSet> cps_io_out(num_streams);
+    std::vector<poplar::ComputeSet> cps_con(num_streams);
+
+    for (int i = 0; i < num_streams; i++) {
+        db_name = "Con in CS " + std::to_string(i);
+        cps_con[i] = graph.addComputeSet(db_name);
+
+        // db_name = "IO in CS " + std::to_string(i);
+        // cps_io_in[i] = graph.addComputeSet(db_name);
+
+        // db_name = "IO in CS " + std::to_string(i);
+        // cps_io_out[i] = graph.addComputeSet(db_name);
+    }
+
+    std::vector<poplar::VertexRef> vtx_con0(num_streams);
+    // std::vector<poplar::VertexRef> vtx_in0(num_streams);
+    // std::vector<poplar::VertexRef> vtx_out0(num_streams);
+    // std::vector<poplar::VertexRef> vtx_out1(num_streams);
+
+    for (int i = 0; i < num_streams; i++) {
+
+        vtx_in0[i] = graph.addVertex(cps_con[i], "IOVertex");
+        graph.setTileMapping(vtx_con0[i], i+5);
+
+        // vtx_in0[i] = graph.addVertex(cps_io_in[i], "IOVertex");
+        // graph.setTileMapping(vtx_in0[i], i+5);
+
+        // vtx_out0[i] = graph.addVertex(cps_io_out[i], "IOVertex");
+        // graph.setTileMapping(vtx_out0[i], i+7);
+        // vtx_out1[i] = graph.addVertex(cps_io_out[i], "IOVertex");
+        // graph.setTileMapping(vtx_out1[i], i+9);
+    }
+
+    for(int i = 0; i < num_streams; i++) {
+
+        
+        graph.connect(vtx_con0[i]["strm_in"], v_io_in0[i]);
+        graph.connect(vtx_con0[i]["strm_out"], v_io_out0[i]);
+        // adding extra inputs for their respective algs
+        if (MODERUN == STRIDEN) {
+            graph.connect(vtx_con0[i]["N"], v_con_N_input);
+        } else if (MODERUN == RAND) {
+            graph.connect(vtx_con0[i]["randomIndices"], v_con_randomIndices);
+        }
+        // graph.connect(vtx_in0[i]["strm_in"], v_io_in0[i]);
+        // graph.connect(vtx_in0[i]["strm_out"], v_con0[i]);
+
+        // graph.connect(vtx_out0[i]["strm_in"], v_con0[i]);
+        // graph.connect(vtx_out0[i]["strm_out"], v_io_out0[i]);
+
+        // graph.connect(vtx_out1[i]["strm_in"], v_con1[i]);
+        // graph.connect(vtx_out1[i]["strm_out"], v_io_out1[i]);
+    }
 
     std::cout << "Added Vertices!" << std::endl;
 
-    std::cout << "Mapping Vertices..." << std::endl;
-    graph.setTileMapping(input_io0, 3);
-    graph.setTileMapping(output_io0, 4);
-
-    std::cout << "Mapped Vertices!" << std::endl;
-
-    std::cout << "Adding Streams..." << std::endl;
     // Streams
-    auto input_strm0 = graph.addHostToDeviceFIFO("Input Stream 0", input_tensor0.elementType(), input_tensor0.numElements());
-    auto output_strm0 = graph.addDeviceToHostFIFO("Output Stream 0", poplar::FLOAT, packet_size);
-    
-    //**** RAND ****//
-    auto random_strm0 = graph.addDeviceToHostFIFO("Random Stream 0", poplar::INT, packet_size);
+    std::cout << "Adding Streams..." << std::endl;
+
+    std::vector<poplar::DataStream> strm_in0(num_streams);
+    std::vector<poplar::DataStream> strm_out0(num_streams);
+    // std::vector<poplar::DataStream> strm_out1(num_streams);
+
+    for (int i = 0; i < num_streams; i++) {
+        db_name = "Input Stream " + std::to_string(i) + " for input 0";
+        strm_in0[i] = graph.addHostToDeviceFIFO(db_name, poplar::FLOAT, row*col);
+
+        db_name = "Output Stream " + std::to_string(i) + " for output 0";
+        strm_out0[i] = graph.addDeviceToHostFIFO(db_name, poplar::FLOAT, row*col);
+
+        // db_name = "Output Stream " + std::to_string(i) + " for output 1";
+        // strm_out1[i] = graph.addDeviceToHostFIFO(db_name, poplar::FLOAT, row*col);
+    }
 
     std::cout << "Added Streams!" << std::endl;
 
-    // Misc
-    //auto ready_flag = graph.addVariable(poplar::INT, {1}, "Ready Flag");
-    //auto num_elements = graph.addVariable(poplar::INT, {1}, "Number of elements");
-
-    //poputil::mapTensorLinearly(graph, ready_flag);
-    //poputil::mapTensorLinearly(graph, num_elements);
-
     // CPU Vectors
-    std::vector<float> cpu_input0(rows*cols);
-    std::vector<float> cpu_output0(rows*cols);
+    std::vector<std::vector<float>> cpu_in0(num_streams, std::vector<float> (row*col, 1.0));
+    std::vector<std::vector<float>> cpu_out0(num_streams, std::vector<float> (row*col, 1.0));
+    // std::vector<std::vector<float>> cpu_out1(num_streams, std::vector<float> (row*col, 5.0));
 
-    //**** RAND ****//
-    std::vector<int> cpu_output_rand(packet_size);
+    std::cout << "Adding Programs..." << std::endl;
 
-    /* Stream Inputs Program */
+    /* Stream Inputs Programs */
+
+    int prog_idx = 0;
 
     auto seq = poplar::program::Sequence();
 
-    for(int i = 0; i < num_transfers; i++) {
-        seq.add(poplar::program::Copy(input_strm0, input_tensor0));
-    }
-
-    // copying N to the input tensor
+    // stream the constants in
+    //**** STRIDE N ****//
     if (MODERUN == STRIDEN) {
-      seq.add(poplar::program::Copy(c1, N_input));
+        seq.add(poplar::program::Copy(v_con_N_input, c_con_N_input));
     }
-
     //**** RAND ****//
-    randomIndices = poprand::uniform(graph, &c2, 0, randomIndices, poplar::INT, 0, packet_size-1, seq);
+    v_con_randomIndices = poprand::uniform(graph, &c_con_rand_seed, 0, v_con_randomIndices, poplar::INT, 0, row*col-1, seq);
 
-    graph.connect(input_io0["strm_in"], input_tensor0);
-    graph.connect(input_io0["strm_out"], output_tensor0);
-    graph.connect(output_io0["strm_in"], input_tensor0);
-    graph.connect(output_io0["strm_out"], output_tensor0);
+    // stream the inputs in
+    for(int i = 0; i < num_streams; i++) {
 
-    if (MODERUN == STRIDEN) {
-      graph.connect(input_io0["N"], N_input);
-      graph.connect(output_io0["N"], N_input);
+        seq.add(poplar::program::Copy(strm_in0[i], v_io_in0[i]));
+
+        // seq.add(poplar::program::Execute(cps_io_in[i]));
+
+        db_name = "v_io_in[" + std::to_string(i) + "]";
+        seq.add(poplar::program::PrintTensor(db_name, v_io_in0[i]));
+
+        // db_name = "v_con0[" + std::to_string(i) + "]";
+        // seq.add(poplar::program::PrintTensor(db_name, v_con0[i]));
+
+        progs[prog_idx++] = seq;
+
+        seq = poplar::program::Sequence();
     }
 
-    if (MODERUN == RAND) {
-      graph.connect(input_io0["randomIndices"], randomIndices);
-      graph.connect(output_io0["randomIndices"], randomIndices);
+    /* Consumption Task Programs */
+
+    // poplin::addCodelets(graph);
+
+    for(int i = 0; i < num_streams; i++) {
+
+        seq = poplar::program::Sequence();
+
+        seq.add(poplar::program::Execute(cps_con[i]));
+
+        // db_name = "v_con0[" + std::to_string(i) + "]";
+        // seq.add(poplar::program::PrintTensor(db_name, v_con1[i]));
+
+        // poplin::experimental::QRFactorization(graph, v_con0[i], v_con1[i], seq);
+
+        // db_name = "v_con0[" + std::to_string(i) + "] (After)";
+        //seq.add(poplar::program::PrintTensor(db_name, v_con0[i]));
+
+        // db_name = "v_con1[" + std::to_string(i) + "] (After)";
+        //seq.add(poplar::program::PrintTensor(db_name, v_con0[i]));
+
+        progs[prog_idx++] = seq;
     }
 
-    seq.add(poplar::program::Execute(io_in));
+    //progs[Progs::CONSUMPTION_TASK] = seq;
 
+    /* Stream Outputs Programs */
 
+    for(int i = 0; i < num_streams; i++) {
 
-    for(int i = 0; i < num_transfers; i++) {
-        seq.add(poplar::program::Copy(output_tensor0, output_strm0));
+        seq = poplar::program::Sequence();
+
+        // seq.add(poplar::program::Execute(cps_io_out[i]));
+
+        // db_name = "v_io_out0[" + std::to_string(i) + "]";
+        //seq.add(poplar::program::PrintTensor(db_name, v_io_out0[i]));
+
+        // db_name = "v_io_out1[" + std::to_string(i) + "]";
+        //seq.add(poplar::program::PrintTensor(db_name, v_io_out1[i]));
+
+        seq.add(poplar::program::Copy(v_io_out0[i], strm_out0[i]));
+        // seq.add(poplar::program::Copy(v_io_out1[i], strm_out1[i]));
+
+        progs[prog_idx++] = seq;
     }
 
-    if (MODERUN == RAND) {
-      seq.add(poplar::program::Copy(randomIndices, random_strm0));
-    }
+    std::cout << "Added Programs!" << std::endl;
 
-    progs[Progs::STREAM_INPUTS] = seq;
+    /* Create and Load Engine */
+
+    std::cout << "Loading Device..." << std::endl;
 
     auto exe = poplar::compileGraph(graph, progs);
     poplar::Engine engine(std::move(exe));
     engine.load(device);
 
+    std::cout << "Loaded Device!" << std::endl;
+
     /* Connect Streams */
 
-    engine.connectStream("Input Stream 0", cpu_input0.data(), cpu_input0.data() + cpu_input0.size());
-    engine.connectStream("Output Stream 0", cpu_output0.data(), cpu_output0.data() + cpu_output0.size());
+    std::cout << "Connecting Streams..." << std::endl;
 
-    if (MODERUN == RAND) {
-      engine.connectStream("Random Stream 0", cpu_output_rand.data(), cpu_output_rand.data() + cpu_output_rand.size());
+    for (int i = 0; i < num_streams; i++) {
+        db_name = "Input Stream " + std::to_string(i) + " for input 0";
+        engine.connectStream(db_name, cpu_in0[i].data(), cpu_in0[i].data() + cpu_in0[i].size());
+
+        db_name = "Output Stream " + std::to_string(i) + " for output 0";
+        engine.connectStream(db_name, cpu_out0[i].data(), cpu_out0[i].data() + cpu_out0[i].size());
+
+        // db_name = "Output Stream " + std::to_string(i) + " for output 1";
+        // engine.connectStream(db_name, cpu_out1[i].data(), cpu_out1[i].data() + cpu_out1[i].size());
     }
 
-    std::cout << "Loaded Device" << std::endl;
+    std::cout << "Connected Streams!" << std::endl << std::endl;
 
-    #pragma omp parallel sections
+    /* Run Parallel Threads for FireHose */
+
+    omp_set_num_threads(num_streams*2);
+
+    //if(get_from_file) {
+        //auto source = distribution;
+    //}
+
+
+    //}
+
+    #pragma omp parallel
     {
-        #pragma omp section
-        {
-            while(data_ready_flag) {}
+        int thread_id = omp_get_thread_num();
+        int gbl_id = (int) thread_id;
+        int snd_id = (int) thread_id;
+        int rcv_id = thread_id-num_streams;
+        
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<float> distribution(0.0f, 100.0f);
 
-            /* Create data to input into back-end */
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_real_distribution<float> distribution(0.0f, 100.0f);
+        // std::string fileName = "/home/ngazda/myFiles/circustent/input" + std::to_string(snd_id) + ".mtx";
 
-            /* Loop to create multiple matrices and decompose */
-                for (int i = 0; i < rows; i++) {
-                    for (int j = 0; j < cols; j++) {
-                        cpu_input0[j+(cols*i)] = 1;
-                        // cpu_input0[j+(cols*i)] = distribution(gen);
-                    }
-                }
-                printMatrix("Input Matrix", cpu_input0, cols);
-                data_ready_flag = true;
-        }
-
-        #pragma omp section
-        {
-            while(!data_ready_flag) {}
-            data_ready_flag = false;
-            engine.run(Progs::STREAM_INPUTS);
+        // std::ifstream file(fileName);
+        // std::string line;
 
 
-            printMatrix("Output Matrix", cpu_output0, cols);
+        if(gbl_id < num_streams) {
+            for (int a = 0; a < num_packets; a++) {
+                while(data_ready_flags[snd_id]);
 
-            if (MODERUN == RAND) {
-              // reading random indices
-              printMatrixInt("Random Indices", cpu_output_rand, 9);
+                // if (!get_from_file) {
+                //     for (int i = 0; i < row*col; i++) {
+                //         cpu_in0[snd_id][i] = distribution(gen);
+                //     }
+                // }
+                // else {
+                //     std::getline(file, line);
+                //     std::istringstream iss(line);
+                //     float value;
+        
+                //     // Split the line into floats
+                //     int i = 0;
+                //     while (iss >> value) {
+                //         cpu_in0[snd_id][i++] = value;
+                //     }
+                // }
+
+                #pragma omp critical(print)
+                    printMatrix("GenMatrix", cpu_in0[snd_id], col, snd_id, a, 0);
+
+                data_ready_flags[snd_id] = true;
+
             }
         }
+        else {
+
+            for (int a = 0; a < num_packets; a++) {
+
+                while(!data_ready_flags[rcv_id]) {}
+
+                #pragma omp critical(ipu_work)
+                {
+                    engine.run(rcv_id);
+                    engine.run(num_streams+rcv_id);
+                    engine.run((num_streams*2)+rcv_id);
+                }
+
+                #pragma omp critical(print)
+                {
+                    printMatrix("QMatrix", cpu_out0[rcv_id], col, rcv_id, a, 1);
+                    printMatrix("RMatrix", cpu_out1[rcv_id], col, rcv_id, a, 1);
+                }
+
+                data_ready_flags[rcv_id] = false;
+            }
+        }
+
+        file.close();
     }
+
     return;
 }
+
+//void placeholder(long unsigned int row, long unsigned int col, long unsigned int num_streams, long unsigned int num_devices) {
+
+//}
