@@ -231,7 +231,7 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
     for (int i = 0; i < num_streams; i++) {
 
-        vtx_in0[i] = graph.addVertex(cps_con[i], "IOVertex");
+        vtx_con0[i] = graph.addVertex(cps_con[i], "IOVertex");
         graph.setTileMapping(vtx_con0[i], i+5);
 
         // vtx_in0[i] = graph.addVertex(cps_io_in[i], "IOVertex");
@@ -472,14 +472,14 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
                 #pragma omp critical(print)
                 {
                     printMatrix("QMatrix", cpu_out0[rcv_id], col, rcv_id, a, 1);
-                    printMatrix("RMatrix", cpu_out1[rcv_id], col, rcv_id, a, 1);
+                    // printMatrix("RMatrix", cpu_out1[rcv_id], col, rcv_id, a, 1);
                 }
 
                 data_ready_flags[rcv_id] = false;
             }
         }
 
-        file.close();
+        // file.close();
     }
 
     return;
