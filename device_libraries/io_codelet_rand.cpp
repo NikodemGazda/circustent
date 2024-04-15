@@ -29,7 +29,7 @@ Vector<Output<Vector<float>>> strm_out;
             for (unsigned i = 0; i < strm_in.size(); i++) {
                 // random_value = rand() % strm_in.size();
                 // strm_out[random_value] = strm_in[random_value]+1;
-                strm_out[randomIndices[i]] = strm_in[randomIndices[i]]+1;
+                strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = strm_in[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()]+1;
             }
         //}
         return true;

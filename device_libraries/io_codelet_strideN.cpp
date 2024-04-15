@@ -32,8 +32,8 @@ Vector<Output<Vector<float>>> strm_out;
 // Compute function
     bool compute() {
         //if (ready_flag[0]) {
-            for (unsigned i = 0; i < strm_in.size(); i+=N[0]) {
-                strm_out[i] = strm_in[i]+1;
+            for (unsigned i = 0; i < strm_in.size()+strm_in[0].size(); i+=N[0]) {
+                strm_out[i/strm_in.size()][i%strm_in.size()] = strm_out[i/strm_in.size()][i%strm_in.size()]+1;
             }
 
             // change to this if we care abt the contents of the output array vvvv
