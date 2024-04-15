@@ -26,12 +26,8 @@
 #include <poprand/codelets.hpp>
 #include <poprand/RandomGen.hpp>
 
-void printMatrix(std::string matrix_name, std::vector<float> matrix, int cols);
+void printMatrix(std::string matrix_name, std::vector<float> matrix, int cols, int id, int packet, int io);
 
-void printMatrixInt(std::string matrix_name, std::vector<float> matrix, int cols);
+void printMatrixInt(std::string matrix_name, std::vector<int> matrix, int cols, int id, int packet, int io);
 
-void frontEnd_TensorDecomp(bool& flag, long unsigned int& rows, long unsigned int& cols, long unsigned int& exp_size, std::vector<float>& cpu_input0, std::vector<float>& cpu_output0, std::vector<float>& cpu_output1);
-
-void backEnd_TensorDecomp(poplar::Engine& engine, bool& flag, long unsigned int& exp_size);
-
-void tensorDecomp();
+void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned int num_packets, long unsigned int num_streams, long unsigned int num_devices, bool get_from_file);
