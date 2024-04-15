@@ -118,14 +118,14 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
     std::vector<poplar::Tensor> v_io_out0(num_streams);
 
     //**** STRIDE N ****//
-    std::vector<poplar::Tensor> v_con_N_input = graph.addVariable(poplar::INT, {1}, "N Input");
+    // std::vector<poplar::Tensor> v_con_N_input = graph.addVariable(poplar::INT, {1}, "N Input");
+    auto v_con_N_input = graph.addVariable(poplar::INT, {1}, "v_con_N_input");
     auto c_con_N_input = graph.addConstant<int>(poplar::INT, {1}, {2});
-    // auto N_input = graph.addVariable(poplar::INT, {1}, "N Input");
 
     //**** RAND ****//
-    std::vector<poplar::Tensor> v_con_randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
+    // std::vector<poplar::Tensor> v_con_randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
+    auto v_con_randomIndices = graph.addVariable(poplar::INT, {row*col}, "v_con_randomIndices");
     auto c_con_rand_seed = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
-    // auto randomIndices = graph.addVariable(poplar::INT, {row*col}, "randomIndices");
 
     // mapping tensors/constants
     //**** STRIDE N ****//
