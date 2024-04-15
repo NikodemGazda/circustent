@@ -2,7 +2,7 @@
 
 #define num_programs 3  
 
-#define MODERUN STRIDE
+#define MODERUN STRIDEN
 
 enum mode {
     STRIDEN,
