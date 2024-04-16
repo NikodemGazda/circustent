@@ -23,15 +23,15 @@ Vector<Output<Vector<float>>> strm_out;
 
 // Compute function
     bool compute() {
-        //if (ready_flag[0]) {
-            // srand(2048);
-            // int random_value;
-            // for (unsigned i = 0; i < strm_in.size()*strm_in[0].size(); i++) {
-            //     // strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = strm_in[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()]+1;
-            //     strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = randomIndices[i];
-            // }
-            strm_out[0][0] = randomIndices[0][0];
-        //}
+        // for (unsigned i = 0; i < strm_in.size()*strm_in[0].size(); i++) {
+        //     // strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = strm_in[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()]+1;
+        //     strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = randomIndices[i];
+        // }
+        for (unsigned i = 0; i < strm_in.size()*strm_in[0].size(); i++) {
+            // strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = strm_in[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()]+1;
+            strm_out[i/strm_in.size()][i%strm_in.size()] = i;
+        }
+        // strm_out[0][0] = randomIndices[0];
         return true;
     }
 };

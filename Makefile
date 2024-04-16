@@ -28,9 +28,8 @@ clean:
 
 prun:
 	git pull
-	sleep 1.5
+	sleep 1
 	$(MAKE) all
-	sleep 1.5
 	rm tensor_decomp_test_*
 	for file in IPU_INPUTS*; do echo "" > $$file; done
 	for file in IPU_OUTPUTS*; do echo "" > $$file; done
