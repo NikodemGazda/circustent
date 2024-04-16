@@ -32,17 +32,14 @@ Vector<Output<Vector<float>>> strm_out;
 // Compute function
     bool compute() {
         //if (ready_flag[0]) {
-            debug_print("Starting computation");
             for (unsigned i = 0; i < strm_in.size()+strm_in[0].size(); i+=N[0]) {
                 strm_out[i/strm_in.size()][i%strm_in.size()] = strm_in[i/strm_in.size()][i%strm_in.size()]+1;
+                if (i == 0) {
+                    strm_out[0][0] = strm_in.size();
+                    strm_out[0][1] = strm_in[0].size();
+                    strm_out[0][2] = strm_in.size()+strm_in[0].size();
+                }
             }
-
-            // strm_out[i/3][i%3] = strm_in[i/3][i%3]+1;
-            // i = 0
-            // strm_out[0][0] = strm_in[i/3][i%3]+1;
-            // [x x x]     [1 1 1]
-            // [x x x] <-- [1 1 1]
-            // [x x x]     [1 1 1]
 
 
             // change to this if we care abt the contents of the output array vvvv
