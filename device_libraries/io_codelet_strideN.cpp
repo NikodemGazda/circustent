@@ -33,7 +33,7 @@ Vector<Output<Vector<float>>> strm_out;
     bool compute() {
         //if (ready_flag[0]) {
             for (unsigned i = 0; i < strm_in.size()+strm_in[0].size(); i+=N[0]) {
-                strm_out[i/strm_in.size()][i%strm_in.size()] = strm_out[i/strm_in.size()][i%strm_in.size()];
+                strm_out[i/strm_in.size()][i%strm_in.size()] = strm_in[i/strm_in.size()][i%strm_in.size()]+1;
             }
 
 
