@@ -26,7 +26,8 @@ clean:
 	rm ./device_libraries/mylib.o
 	rm tensor_decomp_test_*
 
-run:
+prun:
+	git pull
 	rm tensor_decomp_test_*
 	sbatch demo.batch
 	watch squeue -u ngazda
