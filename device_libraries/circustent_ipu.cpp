@@ -252,7 +252,7 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
         if (MODERUN == STRIDEN) {
             graph.connect(vtx_con0[i]["N"], v_con_N_input);
         } else if (MODERUN == RAND) {
-            graph.connect(vtx_con0[i]["randomIndices"], v_con_randomIndices);
+            graph.connect(vtx_con0[i]["randomIndices"], v_con_N_input);
         }
         // graph.connect(vtx_in0[i]["strm_in"], v_io_in0[i]);
         // graph.connect(vtx_in0[i]["strm_out"], v_con0[i]);
