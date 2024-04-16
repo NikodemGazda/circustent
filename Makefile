@@ -33,7 +33,7 @@ prun:
 	sleep 1
 	rm tensor_decomp_test_*
 	for file in IPU_INPUTS*; do echo "" > $$file; done
-    for file in IPU_OUTPUTS*; do echo "" > $$file; done
+	for file in IPU_OUTPUTS*; do echo "" > $$file; done
 	sbatch demo.batch
 	watch squeue -u ngazda
 
