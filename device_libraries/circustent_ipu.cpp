@@ -303,7 +303,7 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
     //**** STRIDE N ****//
     if (MODERUN == STRIDEN) {
         seq.add(poplar::program::Copy(c_con_N_input, v_con_N_input));
-        db_name = "v_con_N_input[" + std::to_string(i) + "]";
+        db_name = "v_con_N_input:";
         seq.add(poplar::program::PrintTensor(db_name, v_con_N_input));
     }
     //**** RAND ****//
