@@ -309,10 +309,8 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
     //**** RAND ****//
     v_con_randomIndices = poprand::uniform(graph, &c_con_rand_seed, 0, v_con_randomIndices, poplar::INT, 0, row*col-1, seq);
     if (MODERUN == RAND) {
-        for (int i = 0; i < row*col; i++) {
-            db_name = "v_con_randomIndices[" + std::to_string(i) + "]";
-            seq.add(poplar::program::PrintTensor(db_name, v_con_randomIndices[i]));
-        }
+        db_name = "v_con_randomIndices";
+        seq.add(poplar::program::PrintTensor(db_name, v_con_randomIndices));
     }
     // if (MODERUN == RAND) {
     //     for (int i = 0; i < row*col; i++) {
