@@ -27,5 +27,11 @@ clean:
 	rm tensor_decomp_test_*
 
 run:
+	clean_logs
 	sbatch demo.batch
 	watch squeue -u ngazda
+
+show:
+	cat tensor_decomp_test_*
+	cat IPU_INPUTS*
+	cat IPU_OUTPUTS*
