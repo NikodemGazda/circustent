@@ -342,8 +342,6 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
         seq.add(poplar::program::Execute(cps_con[i]));
 
-        // db_name = "v_con0[" + std::to_string(i) + "]";
-        // seq.add(poplar::program::PrintTensor(db_name, v_con1[i]));
 
         // poplin::experimental::QRFactorization(graph, v_con0[i], v_con1[i], seq);
 
@@ -373,6 +371,8 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
         //seq.add(poplar::program::PrintTensor(db_name, v_io_out1[i]));
 
         seq.add(poplar::program::Copy(v_io_out0[i], strm_out0[i]));
+        db_name = "out[" + std::to_string(i) + "]";
+        seq.add(poplar::program::PrintTensor(db_name, v_io_out0[i]));
         // seq.add(poplar::program::Copy(v_io_out1[i], strm_out1[i]));
 
         progs[prog_idx++] = seq;
