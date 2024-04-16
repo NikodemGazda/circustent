@@ -26,7 +26,7 @@ Vector<Output<Vector<float>>> strm_out;
         //if (ready_flag[0]) {
             // srand(2048);
             // int random_value;
-            for (unsigned i = 0; i < strm_in.size(); i++) {
+            for (unsigned i = 0; i < strm_in.size()*strm_in[0].size(); i++) {
                 // random_value = rand() % strm_in.size();
                 // strm_out[random_value] = strm_in[random_value]+1;
                 strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = strm_in[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()]+1;
