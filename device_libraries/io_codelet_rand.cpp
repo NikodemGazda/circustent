@@ -28,8 +28,8 @@ Vector<Output<Vector<float>>> strm_out;
         //     strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = randomIndices[i];
         // }
         for (unsigned i = 0; i < strm_in.size()*strm_in[0].size(); i++) {
-            // strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = strm_in[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()]+1;
-            strm_out[i/strm_in.size()][i%strm_in.size()] = randomIndices[0];
+            strm_out[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()] = strm_in[randomIndices[i]/strm_in.size()][randomIndices[i]%strm_in.size()]+1;
+            // strm_out[i/strm_in.size()][i%strm_in.size()] = randomIndices[0];
         }
         // strm_out[0][0] = randomIndices[0];
         return true;
