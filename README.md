@@ -8,10 +8,12 @@
 
 **StrideN**
 - 1 Varaible Tensor, 1 Constant Tensor
+
 *- to store N*
 
 **Rand**
 - 2 Variable Tensors, 1 Constant Tensor
+
 *- to store the random indices and seed*
 
 # Mapping Plan:
