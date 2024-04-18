@@ -114,16 +114,13 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
     std::cout << "Adding Tensors..." << std::endl;
 
     std::vector<poplar::Tensor> v_io_in0(num_streams);
-    // std::vector<poplar::Tensor> v_con0(num_streams);
     std::vector<poplar::Tensor> v_io_out0(num_streams);
 
     //**** STRIDE N ****//
-    // std::vector<poplar::Tensor> v_con_N_input = graph.addVariable(poplar::INT, {1}, "N Input");
     auto v_con_N_input = graph.addVariable(poplar::INT, {1}, "v_con_N_input");
     auto c_con_N_input = graph.addConstant<int>(poplar::INT, {1}, {2});
 
     //**** RAND ****//
-    // std::vector<poplar::Tensor> v_con_randomIndices = graph.addVariable(poplar::INT, {packet_size}, "randomIndices");
     auto v_con_randomIndices = graph.addVariable(poplar::INT, {row*col}, "v_con_randomIndices");
     auto v_con_randomIndices_in = graph.addVariable(poplar::INT, {row*col}, "v_con_randomIndices_in");
     auto c_con_rand_seed = graph.addConstant<int>(poplar::UNSIGNED_INT, {2}, {10, 7}); // create seed here
@@ -144,45 +141,15 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
     for (int i = 0; i < num_streams; i++) {
 
-        /* Input to QR Factorization */
         db_name = "Input Tensor " + std::to_string(i) + " of Set 0";
         v_io_in0[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
         poputil::mapTensorLinearly(graph, v_io_in0[i]);
-
-        // db_name = "Consumption Tensor " + std::to_string(i) + " of Set 0";
-        // v_con0[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
-        // poputil::mapTensorLinearly(graph, v_con0[i]);
 
         db_name = "Output Tensor " + std::to_string(i) + " of Set 0";
         v_io_out0[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
         poputil::mapTensorLinearly(graph, v_io_out0[i]);
 
-        // /* Necessary Identity to QR Factorization */
-        // db_name = "Consumption Tensor" + std::to_string(i) + " of Set 1";
-        // v_con1[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
-        // poputil::mapTensorLinearly(graph, v_con1[i]);
-
-        // db_name = "Output Tensor " + std::to_string(i) + " of Set 1";
-        // v_io_out1[i] = graph.addVariable(poplar::FLOAT, {row, col}, db_name);
-        // poputil::mapTensorLinearly(graph, v_io_out1[i]);
     }
-
-    // // Constant Tensors
-    // std::vector<float> vec_id;
-
-    // for (int i = 0; i < row; i++) {
-    //     for (int j = 0; j < col; j++) {
-    //         if (i == j) {
-    //             vec_id.push_back(1.0);
-    //         }
-    //         else {
-    //             vec_id.push_back(0.0);
-    //         }
-    //     }
-    // }
-
-    // auto c_id = graph.addConstant<float>(poplar::FLOAT, {row, col}, vec_id.data(), "Constant Identity Tensor");
-    // poputil::mapTensorLinearly(graph, c_id);
 
     std::cout << "Added Tensors!" << std::endl;
 
@@ -191,8 +158,6 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
     popops::addCodelets(graph);
 
-    // Add custom codelets
-    // graph.addCodelets("./device_libraries/io_codelet.gp");
     if (MODERUN == STRIDE) {
       graph.addCodelets("./device_libraries/io_codelet.gp");
     }
@@ -211,38 +176,20 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
     // Vertices
     std::cout << "Adding Vertices..." << std::endl;
 
-    // std::vector<poplar::ComputeSet> cps_io_in(num_streams);
-    // std::vector<poplar::ComputeSet> cps_io_out(num_streams);
     std::vector<poplar::ComputeSet> cps_con(num_streams);
 
     for (int i = 0; i < num_streams; i++) {
         db_name = "Con in CS " + std::to_string(i);
         cps_con[i] = graph.addComputeSet(db_name);
-
-        // db_name = "IO in CS " + std::to_string(i);
-        // cps_io_in[i] = graph.addComputeSet(db_name);
-
-        // db_name = "IO in CS " + std::to_string(i);
-        // cps_io_out[i] = graph.addComputeSet(db_name);
     }
 
     std::vector<poplar::VertexRef> vtx_con0(num_streams);
-    // std::vector<poplar::VertexRef> vtx_in0(num_streams);
-    // std::vector<poplar::VertexRef> vtx_out0(num_streams);
-    // std::vector<poplar::VertexRef> vtx_out1(num_streams);
 
     for (int i = 0; i < num_streams; i++) {
 
         vtx_con0[i] = graph.addVertex(cps_con[i], "IOVertex");
         graph.setTileMapping(vtx_con0[i], i+5);
 
-        // vtx_in0[i] = graph.addVertex(cps_io_in[i], "IOVertex");
-        // graph.setTileMapping(vtx_in0[i], i+5);
-
-        // vtx_out0[i] = graph.addVertex(cps_io_out[i], "IOVertex");
-        // graph.setTileMapping(vtx_out0[i], i+7);
-        // vtx_out1[i] = graph.addVertex(cps_io_out[i], "IOVertex");
-        // graph.setTileMapping(vtx_out1[i], i+9);
     }
 
     for(int i = 0; i < num_streams; i++) {
@@ -254,16 +201,8 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
         if (MODERUN == STRIDEN) {
             graph.connect(vtx_con0[i]["N"], v_con_N_input);
         } else if (MODERUN == RAND) {
-            graph.connect(vtx_con0[i]["randomIndices"], v_con_randomIndices_in);
+            graph.connect(vtx_con0[i]["randomIndices"], v_con_randomIndices);
         }
-        // graph.connect(vtx_in0[i]["strm_in"], v_io_in0[i]);
-        // graph.connect(vtx_in0[i]["strm_out"], v_con0[i]);
-
-        // graph.connect(vtx_out0[i]["strm_in"], v_con0[i]);
-        // graph.connect(vtx_out0[i]["strm_out"], v_io_out0[i]);
-
-        // graph.connect(vtx_out1[i]["strm_in"], v_con1[i]);
-        // graph.connect(vtx_out1[i]["strm_out"], v_io_out1[i]);
     }
 
     std::cout << "Added Vertices!" << std::endl;
@@ -273,7 +212,6 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
     std::vector<poplar::DataStream> strm_in0(num_streams);
     std::vector<poplar::DataStream> strm_out0(num_streams);
-    // std::vector<poplar::DataStream> strm_out1(num_streams);
 
     for (int i = 0; i < num_streams; i++) {
         db_name = "Input Stream " + std::to_string(i) + " for input 0";
@@ -281,9 +219,6 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
         db_name = "Output Stream " + std::to_string(i) + " for output 0";
         strm_out0[i] = graph.addDeviceToHostFIFO(db_name, poplar::FLOAT, row*col);
-
-        // db_name = "Output Stream " + std::to_string(i) + " for output 1";
-        // strm_out1[i] = graph.addDeviceToHostFIFO(db_name, poplar::FLOAT, row*col);
     }
 
     std::cout << "Added Streams!" << std::endl;
@@ -291,7 +226,6 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
     // CPU Vectors
     std::vector<std::vector<float>> cpu_in0(num_streams, std::vector<float> (row*col, 1.0));
     std::vector<std::vector<float>> cpu_out0(num_streams, std::vector<float> (row*col, 1.0));
-    // std::vector<std::vector<float>> cpu_out1(num_streams, std::vector<float> (row*col, 5.0));
 
     std::cout << "Adding Programs..." << std::endl;
 
@@ -310,6 +244,9 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
     }
     //**** RAND ****//
     v_con_randomIndices = poprand::uniform(graph, &c_con_rand_seed, 0, v_con_randomIndices, poplar::INT, 0, row*col-1, seq);
+    poputil::mapTensorLinearly(graph, v_con_randomIndices);
+    // poputil::maplinearly(graph, v_con_randomIndices);
+    
     if (MODERUN == RAND) {
         seq.add(poplar::program::Copy(v_con_randomIndices, v_con_randomIndices_in));
         db_name = "v_con_randomIndices_in";
@@ -321,13 +258,8 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
         seq.add(poplar::program::Copy(strm_in0[i], v_io_in0[i]));
 
-        // seq.add(poplar::program::Execute(cps_io_in[i]));
-
         db_name = "v_io_in[" + std::to_string(i) + "]";
         seq.add(poplar::program::PrintTensor(db_name, v_io_in0[i]));
-
-        // db_name = "v_con0[" + std::to_string(i) + "]";
-        // seq.add(poplar::program::PrintTensor(db_name, v_con0[i]));
 
         progs[prog_idx++] = seq;
 
@@ -336,7 +268,6 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
     /* Consumption Task Programs */
 
-    // poplin::addCodelets(graph);
 
     for(int i = 0; i < num_streams; i++) {
 
@@ -344,19 +275,8 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
         seq.add(poplar::program::Execute(cps_con[i]));
 
-
-        // poplin::experimental::QRFactorization(graph, v_con0[i], v_con1[i], seq);
-
-        // db_name = "v_con0[" + std::to_string(i) + "] (After)";
-        //seq.add(poplar::program::PrintTensor(db_name, v_con0[i]));
-
-        // db_name = "v_con1[" + std::to_string(i) + "] (After)";
-        //seq.add(poplar::program::PrintTensor(db_name, v_con0[i]));
-
         progs[prog_idx++] = seq;
     }
-
-    //progs[Progs::CONSUMPTION_TASK] = seq;
 
     /* Stream Outputs Programs */
 
@@ -364,18 +284,9 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
 
         seq = poplar::program::Sequence();
 
-        // seq.add(poplar::program::Execute(cps_io_out[i]));
-
-        // db_name = "v_io_out0[" + std::to_string(i) + "]";
-        //seq.add(poplar::program::PrintTensor(db_name, v_io_out0[i]));
-
-        // db_name = "v_io_out1[" + std::to_string(i) + "]";
-        //seq.add(poplar::program::PrintTensor(db_name, v_io_out1[i]));
-
         seq.add(poplar::program::Copy(v_io_out0[i], strm_out0[i]));
         db_name = "out[" + std::to_string(i) + "]";
         seq.add(poplar::program::PrintTensor(db_name, v_io_out0[i]));
-        // seq.add(poplar::program::Copy(v_io_out1[i], strm_out1[i]));
 
         progs[prog_idx++] = seq;
     }
