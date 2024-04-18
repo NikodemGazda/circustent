@@ -3,7 +3,7 @@
 - 1 Compute set
 - 1 Vertex
 
-**# Total Tensors**
+**7 Total Tensors**
 - 2 Variable Tensors for IO
 
 **StrideN**
