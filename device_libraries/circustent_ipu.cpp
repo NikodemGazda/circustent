@@ -201,7 +201,7 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
         if (MODERUN == STRIDEN) {
             graph.connect(vtx_con0[i]["N"], v_con_N_input);
         } else if (MODERUN == RAND) {
-            graph.connect(vtx_con0[i]["randomIndices"], v_con_randomIndices);
+            graph.connect(vtx_con0[i]["randomIndices"], v_con_randomIndices_in);
         }
     }
 
@@ -244,8 +244,6 @@ void tensorDecomp(long unsigned int row, long unsigned int col, long unsigned in
     }
     //**** RAND ****//
     v_con_randomIndices = poprand::uniform(graph, &c_con_rand_seed, 0, v_con_randomIndices, poplar::INT, 0, row*col-1, seq);
-    poputil::mapTensorLinearly(graph, v_con_randomIndices);
-    // poputil::maplinearly(graph, v_con_randomIndices);
     
     if (MODERUN == RAND) {
         seq.add(poplar::program::Copy(v_con_randomIndices, v_con_randomIndices_in));
